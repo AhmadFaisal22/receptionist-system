@@ -33,10 +33,20 @@ function LoginForm() {
       }
       const { role } = (await res.json()) as { role: string };
       const next = searchParams.get("next");
-      // Only allow same-site relative redirects.
-      const dest = next && next.startsWith("/") && !next.startsWith("//")
-        ? next
-        : HOME_BY_ROLE[role] ?? "/";
+      // Only allow same-origin redirects. Resolving through URL collapses
+      // parser tricks like "/\evil.com" into their real cross-origin host,
+      // which then fails the origin comparison.
+      let dest = HOME_BY_ROLE[role] ?? "/";
+      if (next) {
+        try {
+          const u = new URL(next, window.location.origin);
+          if (u.origin === window.location.origin) {
+            dest = u.pathname + u.search + u.hash;
+          }
+        } catch {
+          // unparsable input keeps the role-based default
+        }
+      }
       window.location.assign(dest);
     } catch {
       setError("Network error");
