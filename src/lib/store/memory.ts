@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { PHOTO_RETENTION_DAYS } from "../config";
 import { localDate } from "../dates";
 import { phonesMatch } from "../phone";
 import type { CheckoutMethod, Employee, Visit } from "../types";
@@ -23,6 +24,12 @@ export class MemoryStore implements Store {
     this.employees = SEED_EMPLOYEES.map((e) => ({ ...e, id: crypto.randomUUID() }));
   }
 
+  /** Lazy housekeeping run on every read: close stale visits + purge old photos. */
+  private maintenance(): void {
+    this.autoCloseStale();
+    this.purgeExpiredPhotos();
+  }
+
   /** Close out anything left open from a previous day, flagged as "auto". */
   private autoCloseStale(): void {
     const today = localDate();
@@ -33,6 +40,16 @@ export class MemoryStore implements Store {
         v.status = "checked_out";
         v.checkoutAt = day.toISOString();
         v.checkoutMethod = "auto";
+      }
+    }
+  }
+
+  /** Delete visitor selfies older than the retention window (UU PDP). */
+  private purgeExpiredPhotos(): void {
+    const cutoff = Date.now() - PHOTO_RETENTION_DAYS * 86_400_000;
+    for (const v of this.visits) {
+      if (v.photoDataUrl && new Date(v.submittedAt).getTime() < cutoff) {
+        v.photoDataUrl = null;
       }
     }
   }
@@ -63,14 +80,14 @@ export class MemoryStore implements Store {
   }
 
   async listVisits(date: string): Promise<Visit[]> {
-    this.autoCloseStale();
+    this.maintenance();
     return this.visits
       .filter((v) => localDate(new Date(v.submittedAt)) === date)
       .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
   }
 
   async getVisit(id: string): Promise<Visit | null> {
-    this.autoCloseStale();
+    this.maintenance();
     return this.visits.find((v) => v.id === id) ?? null;
   }
 
@@ -93,12 +110,12 @@ export class MemoryStore implements Store {
   }
 
   async findByExitToken(token: string): Promise<Visit | null> {
-    this.autoCloseStale();
+    this.maintenance();
     return this.visits.find((v) => v.exitToken === token) ?? null;
   }
 
   async findByCodeAndPhone(code: string, phone: string): Promise<Visit | null> {
-    this.autoCloseStale();
+    this.maintenance();
     return (
       this.visits.find(
         (v) => v.code.toUpperCase() === code.toUpperCase() && phonesMatch(v.phone, phone),

@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { PHOTO_RETENTION_DAYS } from "../config";
 import { phonesMatch } from "../phone";
 import type { CheckoutMethod, Employee, Lang, Visit, VisitStatus } from "../types";
 import type { CheckinInput } from "../validation";
@@ -93,6 +94,7 @@ export class SupabaseStore implements Store {
 
   async listVisits(date: string): Promise<Visit[]> {
     await this.db.rpc("auto_close_stale");
+    await this.db.rpc("purge_expired_photos", { retention_days: PHOTO_RETENTION_DAYS });
     const { data, error } = await this.db
       .from("visits")
       .select()

@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SEG Solar visitor log
 
-## Getting Started
+A Progressive Web App that replaces the paper visitor log book at SEG Solar
+Manufaktur Indonesia. The security post has no computer, so visitors check in
+on their **own phone** by scanning a QR poster; the receptionist in the main
+office sees every arrival on a **live dashboard**.
 
-First, run the development server:
+## How it works
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Gate (no computer)            Cloud                 Main office
+  ┌───────────┐                                     ┌──────────────┐
+  │ CHECK IN  │  scan ─▶ visitor's phone  ─POST─▶   │  live         │
+  │ QR poster │         fills the form              │  dashboard    │
+  └───────────┘                  │                  │ (receptionist)│
+  ┌───────────┐                  ▼                  └──────────────┘
+  │ CHECK OUT │  scan ─▶  one-tap clock out         ┌──────────────┐
+  │ QR poster │                                     │ guard's phone │
+  └───────────┘                                     │ confirm/out   │
+                                                     └──────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit status flows `pending → checked_in → checked_out`. A guard confirms
+arrivals (defeating remote fake check-ins); visitors clock themselves out via
+the exit QR; anything left open at midnight is auto-closed and flagged.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Screens
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Route | Who | Purpose |
+| --- | --- | --- |
+| `/checkin` | visitors (public) | Trilingual form (ID / EN / 中文): name, company, phone, purpose, host, selfie, finger signature |
+| `/checkout` | visitors (public) | One-tap clock-out via saved exit token, or visit code + phone |
+| `/dashboard` | receptionist, admin | Live table, stat cards, search, detail drawer, Excel + PDF export |
+| `/guard` | guard, admin | Confirm pending arrivals; manual clock-out |
+| `/admin` | admin | Maintain the employee list behind host autocomplete |
+| `/qr` | staff | Printable CHECK IN / CHECK OUT posters for the gate |
 
-## Learn More
+## Run locally (demo mode)
 
-To learn more about Next.js, take a look at the following resources:
+No database needed — runs against an in-memory store seeded with sample
+employees. Data resets when the server restarts.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+cp .env.example .env.local   # then fill in AUTH_SECRET + the 3 staff passwords
+npm run dev                  # http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Demo logins use the role dropdown on `/login` with the passwords you set in
+`.env.local` (`STAFF_RECEPTIONIST_PASSWORD`, `STAFF_GUARD_PASSWORD`,
+`STAFF_ADMIN_PASSWORD`).
 
-## Deploy on Vercel
+```bash
+npm test       # unit tests (auth, store, validation, rate limit, CSV)
+npm run build  # production build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Going live
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the full checklist: create a Supabase
+project, run `supabase/schema.sql`, set the production environment variables,
+deploy to Vercel, and print the QR posters.
+
+## Tech
+
+Next.js 16 (App Router) · TypeScript · Tailwind · GSAP (dashboard animation) ·
+Supabase (Postgres + RLS) · Zod validation · signature_pad · qrcode.react.
+
+## Security notes
+
+- HMAC-signed httpOnly session cookies; staff passwords from env vars only.
+- Deny-by-default Supabase Row Level Security; the app talks to the DB with the
+  server-only service-role key.
+- CSP and security headers in `next.config.ts`; rate limiting on public routes.
+- CSV export is hardened against spreadsheet formula injection.
+- Visitor selfies are personal data (UU PDP) — auto-deleted after
+  `PHOTO_RETENTION_DAYS` (default 30); the rest of the log is kept for audit.

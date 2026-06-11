@@ -25,6 +25,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Pin the workspace root to this app so Turbopack doesn't get confused by a
+  // sibling package-lock.json higher up the tree.
+  turbopack: { root: __dirname },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

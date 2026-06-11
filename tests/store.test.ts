@@ -86,6 +86,21 @@ describe("MemoryStore", () => {
     expect(closed?.checkoutMethod).toBe("auto");
   });
 
+  it("purges selfies older than the retention window, keeps recent ones", async () => {
+    const store = new MemoryStore();
+    const old = await store.createVisit(input({ photoDataUrl: "data:image/jpeg;base64,AAAA" }));
+    const recent = await store.createVisit(input({ photoDataUrl: "data:image/jpeg;base64,BBBB" }));
+    const visits = (store as unknown as { visits: Visit[] }).visits;
+    // Age the first visit past the 30-day default retention.
+    const oldRow = visits.find((v) => v.id === old.id)!;
+    oldRow.submittedAt = new Date(Date.now() - 40 * 86_400_000).toISOString();
+
+    await store.listVisits(localDate()); // triggers lazy maintenance
+
+    expect((await store.getVisit(old.id))?.photoDataUrl).toBeNull();
+    expect((await store.getVisit(recent.id))?.photoDataUrl).toBe("data:image/jpeg;base64,BBBB");
+  });
+
   it("employee search only exposes active employees", async () => {
     const store = new MemoryStore();
     const all = await store.listEmployees(undefined, true);

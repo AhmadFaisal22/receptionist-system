@@ -98,8 +98,29 @@ $$;
 
 revoke execute on function auto_close_stale() from public, anon, authenticated;
 
+-- ------------------------------------------------------------
+-- Delete visitor selfies older than the retention window.
+-- Personal data under Indonesia's UU PDP — keep the photo only as
+-- long as needed. The rest of the log row (name, signature, times)
+-- is retained for the audit trail.
+-- ------------------------------------------------------------
+create or replace function purge_expired_photos(retention_days int default 30)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update visits
+  set photo_data = null
+  where photo_data is not null
+    and submitted_at < now() - make_interval(days => retention_days);
+$$;
+
+revoke execute on function purge_expired_photos(int) from public, anon, authenticated;
+
 -- Optional: run nightly without app traffic (Supabase pg_cron).
 --   select cron.schedule('auto-close-visits', '5 0 * * *', 'select auto_close_stale()');
+--   select cron.schedule('purge-photos', '15 0 * * *', 'select purge_expired_photos(30)');
 
 -- Seed the employee directory (edit to your real staff, or use /admin).
 insert into employees (name, department) values
