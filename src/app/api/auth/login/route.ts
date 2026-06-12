@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     name: SESSION_COOKIE,
     value: signSession(newSession(parsed.data.username, role)),
     maxAge: SESSION_HOURS * 3600,
-    ...sessionCookieOptions(),
+    ...sessionCookieOptions(req),
   });
   return res;
 }

@@ -81,11 +81,26 @@ export function checkCredentials(username: string, password: string): Role | nul
   return match ? account.role : null;
 }
 
-export function sessionCookieOptions() {
+/** True only when the request actually arrived over HTTPS. */
+export function isHttps(req: Request): boolean {
+  // Behind Vercel/any reverse proxy the edge sets x-forwarded-proto.
+  const proto = req.headers.get("x-forwarded-proto");
+  if (proto) return proto.split(",")[0].trim() === "https";
+  try {
+    return new URL(req.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function sessionCookieOptions(req?: Request) {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    // Mark Secure only on real HTTPS. Hardcoding it to true breaks login when
+    // the app is served over plain http on a LAN (guard/visitor phones hitting
+    // http://192.168.x.x) — the browser silently drops a Secure cookie there.
+    secure: req ? isHttps(req) : process.env.NODE_ENV === "production",
     path: "/",
   };
 }

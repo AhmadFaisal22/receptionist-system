@@ -22,13 +22,27 @@ export default function SignatureField({
     const pad = new SignaturePad(canvas, { penColor: "#0f172a" });
     padRef.current = pad;
 
+    let lastW = 0;
+    let lastH = 0;
     const resize = () => {
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      // Mobile fires "resize" on scroll (address bar) and keyboard open even
+      // when the canvas size is unchanged. Ignore those — redrawing would wipe
+      // a signature the visitor already made and re-disable the submit button.
+      if (w === lastW && h === lastH) return;
+      lastW = w;
+      lastH = h;
+      const data = pad.toData();
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      canvas.width = canvas.offsetWidth * ratio;
-      canvas.height = canvas.offsetHeight * ratio;
+      canvas.width = w * ratio;
+      canvas.height = h * ratio;
       canvas.getContext("2d")?.scale(ratio, ratio);
       pad.clear();
-      onChange(null);
+      if (data.length > 0) {
+        pad.fromData(data); // restore strokes after a genuine resize
+        onChange(pad.toDataURL("image/png"));
+      }
     };
     resize();
     window.addEventListener("resize", resize);
