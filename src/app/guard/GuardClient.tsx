@@ -15,7 +15,7 @@ export default function GuardClient({ user }: { user: string }) {
     try {
       const res = await fetch(`/api/visits?date=${localDate()}`, { cache: "no-store" });
       if (res.status === 401) {
-        window.location.assign("/login?next=/guard");
+        window.location.replace("/login?next=/guard");
         return;
       }
       if (res.ok) setVisits((await res.json()) as PublicVisit[]);
@@ -42,7 +42,7 @@ export default function GuardClient({ user }: { user: string }) {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.assign("/login");
+    window.location.replace("/login");
   }
 
   const pending = visits.filter((v) => v.status === "pending");

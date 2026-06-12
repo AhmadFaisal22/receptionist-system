@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import BackToMenu from "@/components/BackToMenu";
 import Logo from "@/components/Logo";
@@ -11,12 +11,64 @@ const HOME_BY_ROLE: Record<string, string> = {
   admin: "/dashboard",
 };
 
+function safeDest(role: string, next: string | null): string {
+  // Only allow same-origin redirects. Resolving through URL collapses parser
+  // tricks like "/\evil.com" into their real cross-origin host, which then
+  // fails the origin check below.
+  let dest = HOME_BY_ROLE[role] ?? "/";
+  if (next) {
+    try {
+      const u = new URL(next, window.location.origin);
+      if (u.origin === window.location.origin) dest = u.pathname + u.search + u.hash;
+    } catch {
+      // unparsable input keeps the role-based default
+    }
+  }
+  return dest;
+}
+
 function LoginForm() {
   const searchParams = useSearchParams();
+  const next = searchParams.get("next");
   const [username, setUsername] = useState("reception");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const goHome = useCallback(
+    // replace() so the login page is not left in history — pressing Back from
+    // the dashboard must not return to the (cached) login form.
+    (role: string) => window.location.replace(safeDest(role, next)),
+    [next],
+  );
+
+  // If already logged in, don't show the login form — bounce to the right home.
+  // Covers fresh loads and Back/Forward (bfcache) restores, and clears any
+  // password the browser restored from cache.
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        if (!cancelled && res.ok) {
+          const { role } = (await res.json()) as { role: string };
+          goHome(role);
+        }
+      } catch {
+        // not logged in or offline — stay on the form
+      }
+    };
+    check();
+    const onPageShow = (e: PageTransitionEvent) => {
+      setPassword("");
+      if (e.persisted) check();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [goHome]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,22 +86,7 @@ function LoginForm() {
         return;
       }
       const { role } = (await res.json()) as { role: string };
-      const next = searchParams.get("next");
-      // Only allow same-origin redirects. Resolving through URL collapses
-      // parser tricks like "/\evil.com" into their real cross-origin host,
-      // which then fails the origin comparison.
-      let dest = HOME_BY_ROLE[role] ?? "/";
-      if (next) {
-        try {
-          const u = new URL(next, window.location.origin);
-          if (u.origin === window.location.origin) {
-            dest = u.pathname + u.search + u.hash;
-          }
-        } catch {
-          // unparsable input keeps the role-based default
-        }
-      }
-      window.location.assign(dest);
+      goHome(role);
     } catch {
       setError("Network error");
     } finally {

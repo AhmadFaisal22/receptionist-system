@@ -14,7 +14,7 @@ export default function AdminClient() {
   const load = useCallback(async () => {
     const res = await fetch("/api/employees?all=1", { cache: "no-store" });
     if (res.status === 401) {
-      window.location.assign("/login?next=/admin");
+      window.location.replace("/login?next=/admin");
       return;
     }
     if (res.ok) setEmployees((await res.json()) as Employee[]);

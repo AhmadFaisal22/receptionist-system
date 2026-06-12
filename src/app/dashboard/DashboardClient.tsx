@@ -71,7 +71,7 @@ export default function DashboardClient({ user, role }: { user: string; role: st
     try {
       const res = await fetch(`/api/visits?date=${date}`, { cache: "no-store" });
       if (res.status === 401) {
-        window.location.assign("/login?next=/dashboard");
+        window.location.replace("/login?next=/dashboard");
         return;
       }
       if (!res.ok) throw new Error(String(res.status));
@@ -141,7 +141,7 @@ export default function DashboardClient({ user, role }: { user: string; role: st
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.assign("/login");
+    window.location.replace("/login");
   }
 
   return (
