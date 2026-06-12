@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { staffDict } from "@/lib/i18n";
+import { useLang } from "@/lib/useLang";
 import BackToMenu from "@/components/BackToMenu";
+import LangToggle from "@/components/LangToggle";
 
 export default function QrPostersPage() {
+  const [lang, setLang] = useLang();
+  const t = staffDict[lang];
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
@@ -15,20 +20,19 @@ export default function QrPostersPage() {
 
   return (
     <main className="flex-1 p-6">
-      <div className="no-print flex items-center justify-between max-w-3xl mx-auto mb-6">
+      <div className="no-print flex items-center justify-between gap-3 max-w-3xl mx-auto mb-6 flex-wrap">
         <div>
-          <h1 className="text-base font-semibold">QR posters for the security post</h1>
-          <p className="text-xs text-slate-500">
-            Print this page, cut the two posters apart, and laminate them.
-          </p>
+          <h1 className="text-base font-semibold">{t.qrTitle}</h1>
+          <p className="text-xs text-slate-500">{t.qrDesc}</p>
         </div>
         <div className="flex items-center gap-4">
-          <BackToMenu />
+          <LangToggle lang={lang} setLang={setLang} />
+          <BackToMenu label={t.menu} />
           <button
             onClick={() => window.print()}
             className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm font-medium"
           >
-            🖨 Print
+            🖨 {t.print}
           </button>
         </div>
       </div>

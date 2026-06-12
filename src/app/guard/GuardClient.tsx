@@ -2,11 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fmtTime, localDate } from "@/lib/dates";
+import { staffDict } from "@/lib/i18n";
+import { useLang } from "@/lib/useLang";
 import type { PublicVisit } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
+import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
 
 export default function GuardClient({ user }: { user: string }) {
+  const [lang, setLang] = useLang();
+  const t = staffDict[lang];
   const [visits, setVisits] = useState<PublicVisit[]>([]);
   const [q, setQ] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -63,26 +68,25 @@ export default function GuardClient({ user }: { user: string }) {
         <div className="flex items-center gap-3">
           <Logo className="h-9 w-auto" />
           <div>
-            <h1 className="text-base font-semibold leading-tight">Pos keamanan</h1>
+            <h1 className="text-base font-semibold leading-tight">{t.guardTitle}</h1>
             <p className="text-xs text-slate-500">{user} — SEG Solar</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <BackToMenu label="Menu" className="text-xs" />
+        <div className="flex items-center gap-3 flex-wrap">
+          <LangToggle lang={lang} setLang={setLang} />
+          <BackToMenu label={t.menu} className="text-xs" />
           <button onClick={logout} className="text-xs text-slate-500 underline">
-            Keluar
+            {t.signOut}
           </button>
         </div>
       </header>
 
       <section className="mt-5">
         <h2 className="text-sm font-semibold text-slate-700">
-          Menunggu konfirmasi ({pending.length})
+          {t.waitingConfirm} ({pending.length})
         </h2>
         {pending.length === 0 && (
-          <p className="text-sm text-slate-400 mt-2">
-            Tidak ada tamu yang menunggu. Entri baru muncul otomatis.
-          </p>
+          <p className="text-sm text-slate-400 mt-2">{t.noWaiting}</p>
         )}
         <div className="space-y-3 mt-2">
           {pending.map((v) => (
@@ -101,7 +105,7 @@ export default function GuardClient({ user }: { user: string }) {
                 onClick={() => action(v.id, "confirm")}
                 className="w-full mt-3 rounded-xl bg-green-600 text-white px-4 py-3 text-base font-semibold disabled:opacity-50"
               >
-                ✓ Konfirmasi masuk
+                ✓ {t.confirmEntry}
               </button>
             </div>
           ))}
@@ -110,12 +114,12 @@ export default function GuardClient({ user }: { user: string }) {
 
       <section className="mt-6">
         <h2 className="text-sm font-semibold text-slate-700">
-          Sedang di dalam ({inside.length})
+          {t.insideNow} ({inside.length})
         </h2>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Cari nama / nomor kunjungan…"
+          placeholder={t.searchInside}
           className="w-full mt-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
         />
         <div className="space-y-2 mt-2">
@@ -129,7 +133,7 @@ export default function GuardClient({ user }: { user: string }) {
                   {v.name} <span className="font-mono text-xs text-slate-400">{v.code}</span>
                 </p>
                 <p className="text-xs text-slate-500">
-                  Masuk {fmtTime(v.checkinAt)} — {v.institution}
+                  {t.enteredAt} {fmtTime(v.checkinAt)} — {v.institution}
                 </p>
               </div>
               <button
@@ -137,7 +141,7 @@ export default function GuardClient({ user }: { user: string }) {
                 onClick={() => action(v.id, "checkout")}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-600 disabled:opacity-50"
               >
-                Clock out
+                {t.clockOut}
               </button>
             </div>
           ))}

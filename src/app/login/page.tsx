@@ -2,7 +2,10 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { staffDict } from "@/lib/i18n";
+import { useLang } from "@/lib/useLang";
 import BackToMenu from "@/components/BackToMenu";
+import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
 
 const HOME_BY_ROLE: Record<string, string> = {
@@ -28,6 +31,8 @@ function safeDest(role: string, next: string | null): string {
 }
 
 function LoginForm() {
+  const [lang, setLang] = useLang();
+  const t = staffDict[lang];
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
   const [username, setUsername] = useState("reception");
@@ -82,13 +87,13 @@ function LoginForm() {
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        setError(data?.error ?? "Login failed");
+        setError(data?.error ?? t.loginFailed);
         return;
       }
       const { role } = (await res.json()) as { role: string };
       goHome(role);
     } catch {
-      setError("Network error");
+      setError(t.networkError);
     } finally {
       setBusy(false);
     }
@@ -100,22 +105,25 @@ function LoginForm() {
   return (
     <main className="flex-1 flex items-center justify-center p-4">
       <form onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 p-6">
-        <div className="flex items-center gap-3 mb-5">
-          <Logo className="h-9 w-auto" />
-          <div>
-            <p className="text-sm font-semibold leading-tight">SEG Solar Manufaktur Indonesia</p>
-            <p className="text-xs text-slate-500">Staff login</p>
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3">
+            <Logo className="h-9 w-auto" />
+            <div>
+              <p className="text-sm font-semibold leading-tight">SEG Solar Manufaktur Indonesia</p>
+              <p className="text-xs text-slate-500">{t.staffLogin}</p>
+            </div>
           </div>
+          <LangToggle lang={lang} setLang={setLang} />
         </div>
 
-        <label className="block text-sm text-slate-600 mb-1">Role</label>
+        <label className="block text-sm text-slate-600 mb-1">{t.role}</label>
         <select className={inputCls} value={username} onChange={(e) => setUsername(e.target.value)}>
-          <option value="reception">Receptionist</option>
-          <option value="guard">Security guard</option>
-          <option value="admin">Admin</option>
+          <option value="reception">{t.roleReceptionist}</option>
+          <option value="guard">{t.roleGuard}</option>
+          <option value="admin">{t.roleAdmin}</option>
         </select>
 
-        <label className="block text-sm text-slate-600 mb-1 mt-3">Password</label>
+        <label className="block text-sm text-slate-600 mb-1 mt-3">{t.password}</label>
         <input
           className={inputCls}
           type="password"
@@ -131,7 +139,7 @@ function LoginForm() {
           disabled={busy || !password}
           className="w-full mt-5 rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm font-medium disabled:opacity-50"
         >
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? t.signingIn : t.signIn}
         </button>
 
         <div className="mt-4 text-center">

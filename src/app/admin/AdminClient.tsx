@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { staffDict } from "@/lib/i18n";
+import { useLang } from "@/lib/useLang";
 import type { Employee } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
+import LangToggle from "@/components/LangToggle";
 
 export default function AdminClient() {
+  const [lang, setLang] = useLang();
+  const t = staffDict[lang];
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
@@ -33,7 +38,7 @@ export default function AdminClient() {
       body: JSON.stringify({ name: name.trim(), department: department.trim() }),
     });
     if (!res.ok) {
-      setError("Could not add employee — check the fields.");
+      setError(t.addError);
       return;
     }
     setName("");
@@ -51,7 +56,7 @@ export default function AdminClient() {
   }
 
   async function remove(emp: Employee) {
-    if (!confirm(`Delete ${emp.name}? Past visits keep the host name.`)) return;
+    if (!confirm(`${emp.name} — ${t.confirmDelete}`)) return;
     await fetch(`/api/employees/${emp.id}`, { method: "DELETE" });
     load();
   }
@@ -63,29 +68,28 @@ export default function AdminClient() {
     <main className="flex-1 p-4 md:p-6 max-w-2xl mx-auto w-full">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-base font-semibold">Employee list</h1>
-          <p className="text-xs text-slate-500">
-            Names offered by the host autocomplete on the check-in form
-          </p>
+          <h1 className="text-base font-semibold">{t.employeeList}</h1>
+          <p className="text-xs text-slate-500">{t.employeeListDesc}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <LangToggle lang={lang} setLang={setLang} />
           <Link href="/dashboard" className="text-xs text-slate-500 underline">
-            ← Dashboard
+            ← {t.backDashboard}
           </Link>
-          <BackToMenu label="Menu" className="text-xs" />
+          <BackToMenu label={t.menu} className="text-xs" />
         </div>
       </header>
 
       <form onSubmit={add} className="flex gap-2 mt-5 flex-wrap">
         <input
           className={`${inputCls} flex-1 min-w-40`}
-          placeholder="Full name"
+          placeholder={t.fullName}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
           className={`${inputCls} w-40`}
-          placeholder="Department"
+          placeholder={t.department}
           value={department}
           onChange={(e) => setDepartment(e.target.value)}
         />
@@ -94,7 +98,7 @@ export default function AdminClient() {
           disabled={name.trim().length < 2 || !department.trim()}
           className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
-          Add
+          {t.add}
         </button>
       </form>
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
@@ -110,16 +114,16 @@ export default function AdminClient() {
             </div>
             <div className="flex items-center gap-3">
               <button onClick={() => toggle(emp)} className="text-xs text-slate-500 underline">
-                {emp.active ? "Deactivate" : "Activate"}
+                {emp.active ? t.deactivate : t.activate}
               </button>
               <button onClick={() => remove(emp)} className="text-xs text-red-500 underline">
-                Delete
+                {t.remove}
               </button>
             </div>
           </div>
         ))}
         {employees.length === 0 && (
-          <p className="px-4 py-8 text-sm text-slate-400 text-center">No employees yet.</p>
+          <p className="px-4 py-8 text-sm text-slate-400 text-center">{t.noEmployees}</p>
         )}
       </div>
     </main>
