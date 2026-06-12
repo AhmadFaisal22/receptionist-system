@@ -28,8 +28,12 @@ describe("CheckinSchema", () => {
     ).toBe(false);
   });
 
-  it("rejects unknown purposes", () => {
-    expect(CheckinSchema.safeParse({ ...valid, purpose: "sabotage" }).success).toBe(false);
+  it("accepts free-text purpose (typed under 'Other') within length bounds", () => {
+    expect(CheckinSchema.safeParse({ ...valid, purpose: "Annual safety training" }).success).toBe(
+      true,
+    );
+    expect(CheckinSchema.safeParse({ ...valid, purpose: "x" }).success).toBe(false);
+    expect(CheckinSchema.safeParse({ ...valid, purpose: "x".repeat(121) }).success).toBe(false);
   });
 
   it("rejects non-PNG signature payloads", () => {

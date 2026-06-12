@@ -30,6 +30,7 @@ const id = {
   phone: "Nomor telepon",
   phonePh: "+62 812 …",
   purpose: "Tujuan kunjungan",
+  purposeOtherPh: "Tuliskan tujuan kunjungan Anda",
   purposes: {
     meeting: "Rapat",
     delivery: "Pengiriman",
@@ -87,6 +88,7 @@ const en: Messages = {
   phone: "Phone number",
   phonePh: "+62 812 …",
   purpose: "Purpose of visit",
+  purposeOtherPh: "Type your purpose of visit",
   purposes: {
     meeting: "Meeting",
     delivery: "Delivery",
@@ -142,6 +144,7 @@ const zh: Messages = {
   phone: "电话号码",
   phonePh: "+62 812 …",
   purpose: "来访目的",
+  purposeOtherPh: "请输入您的来访目的",
   purposes: {
     meeting: "会议",
     delivery: "送货",

@@ -47,6 +47,7 @@ export default function CheckinPage() {
   const [institution, setInstitution] = useState("");
   const [phone, setPhone] = useState("");
   const [purpose, setPurpose] = useState<Purpose | null>(null);
+  const [purposeOther, setPurposeOther] = useState("");
   const [hostQuery, setHostQuery] = useState("");
   const [host, setHost] = useState<EmployeeOption | null>(null);
   const [suggestions, setSuggestions] = useState<EmployeeOption[]>([]);
@@ -74,7 +75,10 @@ export default function CheckinPage() {
   }, [hostQuery, host]);
 
   const step1Valid = name.trim().length >= 2 && institution.trim().length >= 2 && phone.trim().length >= 7;
-  const step2Valid = purpose !== null && (host !== null || hostQuery.trim().length >= 2);
+  const step2Valid =
+    purpose !== null &&
+    (purpose !== "other" || purposeOther.trim().length >= 2) &&
+    (host !== null || hostQuery.trim().length >= 2);
   const step3Valid = signature !== null;
 
   async function handlePhoto(file: File | undefined) {
@@ -98,7 +102,7 @@ export default function CheckinPage() {
           name: name.trim(),
           institution: institution.trim(),
           phone: phone.trim(),
-          purpose,
+          purpose: purpose === "other" ? purposeOther.trim() : purpose,
           hostId: host?.id ?? null,
           hostName: host?.name ?? hostQuery.trim(),
           hostDepartment: host?.department ?? "",
@@ -248,6 +252,16 @@ export default function CheckinPage() {
                 </button>
               ))}
             </div>
+            {purpose === "other" && (
+              <input
+                className={`${inputCls} mt-2`}
+                value={purposeOther}
+                onChange={(e) => setPurposeOther(e.target.value)}
+                placeholder={t.purposeOtherPh}
+                maxLength={120}
+                autoFocus
+              />
+            )}
             <label className={labelCls}>{t.host}</label>
             {host ? (
               <div className="flex items-center justify-between rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5">

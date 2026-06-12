@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { PURPOSES } from "./i18n";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -10,7 +9,8 @@ export const CheckinSchema = z.object({
     .string()
     .trim()
     .regex(/^\+?[0-9][0-9 ()\-.]{6,19}$/, "invalid phone number"),
-  purpose: z.enum(PURPOSES),
+  // A preset chip value (meeting/delivery/…) or free text typed under "Other".
+  purpose: z.string().trim().min(2).max(120),
   hostId: z.string().max(64).nullish(),
   hostName: z.string().trim().min(2).max(80),
   hostDepartment: z.string().trim().max(80).optional().default(""),

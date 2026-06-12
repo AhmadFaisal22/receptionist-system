@@ -32,8 +32,8 @@ create table if not exists visits (
   name text not null check (char_length(name) between 2 and 80),
   institution text not null check (char_length(institution) between 2 and 120),
   phone text not null check (char_length(phone) between 7 and 20),
-  purpose text not null
-    check (purpose in ('meeting', 'delivery', 'audit', 'interview', 'contractor', 'other')),
+  -- A preset chip value (meeting/delivery/…) or free text typed under "Other".
+  purpose text not null check (char_length(purpose) between 2 and 120),
   host_id uuid references employees (id) on delete set null,
   host_name text not null check (char_length(host_name) between 2 and 80),
   host_department text not null default '',
