@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import BackToMenu from "@/components/BackToMenu";
+import Logo from "@/components/Logo";
 
 const HOME_BY_ROLE: Record<string, string> = {
   receptionist: "/dashboard",
@@ -63,7 +64,7 @@ function LoginForm() {
     <main className="flex-1 flex items-center justify-center p-4">
       <form onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 p-6">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-xl">☀</div>
+          <Logo className="h-9 w-auto" />
           <div>
             <p className="text-sm font-semibold leading-tight">SEG Solar Manufaktur Indonesia</p>
             <p className="text-xs text-slate-500">Staff login</p>

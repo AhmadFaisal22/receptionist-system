@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import SignatureField from "@/components/SignatureField";
 import BackToMenu from "@/components/BackToMenu";
+import Logo from "@/components/Logo";
 import { dict, LANGS, PURPOSES, type Lang, type Purpose } from "@/lib/i18n";
 
 interface EmployeeOption {
@@ -182,7 +183,7 @@ export default function CheckinPage() {
           <BackToMenu label={t.mainMenu} />
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-xl">☀</div>
+          <Logo className="h-9 w-auto" />
           <div className="flex-1">
             <p className="text-sm font-semibold leading-tight">{t.companyName}</p>
             <p className="text-xs text-slate-500">{t.checkinTitle}</p>

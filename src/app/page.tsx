@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 const LINKS = [
   {
@@ -28,9 +29,7 @@ export default function Home() {
     <main className="flex-1 flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-4">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center text-2xl">
-            ☀
-          </div>
+          <Logo className="h-11 w-auto" />
           <div>
             <h1 className="text-lg font-semibold leading-tight">
               SEG Solar Manufaktur Indonesia

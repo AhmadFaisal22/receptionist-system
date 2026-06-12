@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { fmtTime, localDate } from "@/lib/dates";
 import type { PublicVisit } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
+import Logo from "@/components/Logo";
 
 export default function GuardClient({ user }: { user: string }) {
   const [visits, setVisits] = useState<PublicVisit[]>([]);
@@ -60,7 +61,7 @@ export default function GuardClient({ user }: { user: string }) {
     <main className="flex-1 p-4 max-w-lg mx-auto w-full">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-xl">☀</div>
+          <Logo className="h-9 w-auto" />
           <div>
             <h1 className="text-base font-semibold leading-tight">Pos keamanan</h1>
             <p className="text-xs text-slate-500">{user} — SEG Solar</p>

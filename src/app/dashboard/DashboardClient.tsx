@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { fmtTime, localDate } from "@/lib/dates";
 import type { PublicVisit } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
+import Logo from "@/components/Logo";
 
 const PURPOSE_LABEL: Record<string, string> = {
   meeting: "Meeting",
@@ -147,7 +148,7 @@ export default function DashboardClient({ user, role }: { user: string; role: st
     <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-xl">☀</div>
+          <Logo className="h-9 w-auto" />
           <div>
             <h1 className="text-base font-semibold leading-tight">
               SEG Solar Manufaktur Indonesia
