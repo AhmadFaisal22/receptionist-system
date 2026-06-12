@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { Employee } from "@/lib/types";
+import BackToMenu from "@/components/BackToMenu";
 
 export default function AdminClient() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -67,9 +68,12 @@ export default function AdminClient() {
             Names offered by the host autocomplete on the check-in form
           </p>
         </div>
-        <Link href="/dashboard" className="text-xs text-slate-500 underline">
-          ← Dashboard
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="text-xs text-slate-500 underline">
+            ← Dashboard
+          </Link>
+          <BackToMenu label="Menu" className="text-xs" />
+        </div>
       </header>
 
       <form onSubmit={add} className="flex gap-2 mt-5 flex-wrap">

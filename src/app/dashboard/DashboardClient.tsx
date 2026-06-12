@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { fmtTime, localDate } from "@/lib/dates";
 import type { PublicVisit } from "@/lib/types";
+import BackToMenu from "@/components/BackToMenu";
 
 const PURPOSE_LABEL: Record<string, string> = {
   meeting: "Meeting",
@@ -174,6 +175,7 @@ export default function DashboardClient({ user, role }: { user: string; role: st
           <span className="text-xs text-slate-500 hidden sm:block">
             {user} ({role})
           </span>
+          <BackToMenu label="Menu" className="text-xs" />
           <button onClick={logout} className="text-xs text-slate-500 underline">
             Sign out
           </button>

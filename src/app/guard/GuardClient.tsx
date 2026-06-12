@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fmtTime, localDate } from "@/lib/dates";
 import type { PublicVisit } from "@/lib/types";
+import BackToMenu from "@/components/BackToMenu";
 
 export default function GuardClient({ user }: { user: string }) {
   const [visits, setVisits] = useState<PublicVisit[]>([]);
@@ -65,9 +66,12 @@ export default function GuardClient({ user }: { user: string }) {
             <p className="text-xs text-slate-500">{user} — SEG Solar</p>
           </div>
         </div>
-        <button onClick={logout} className="text-xs text-slate-500 underline">
-          Keluar
-        </button>
+        <div className="flex items-center gap-3">
+          <BackToMenu label="Menu" className="text-xs" />
+          <button onClick={logout} className="text-xs text-slate-500 underline">
+            Keluar
+          </button>
+        </div>
       </header>
 
       <section className="mt-5">

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import SignatureField from "@/components/SignatureField";
+import BackToMenu from "@/components/BackToMenu";
 import { dict, LANGS, PURPOSES, type Lang, type Purpose } from "@/lib/i18n";
 
 interface EmployeeOption {
@@ -166,6 +167,9 @@ export default function CheckinPage() {
             </div>
           </div>
           <p className="text-xs text-slate-400 mt-4">{t.exitHint}</p>
+          <div className="mt-5 pt-4 border-t border-slate-100">
+            <BackToMenu label={t.mainMenu} />
+          </div>
         </div>
       </main>
     );
@@ -174,6 +178,9 @@ export default function CheckinPage() {
   return (
     <main className="flex-1 flex items-start justify-center p-4">
       <div className="w-full max-w-md rounded-3xl bg-white border border-slate-200 p-5 mt-4 mb-8">
+        <div className="mb-3">
+          <BackToMenu label={t.mainMenu} />
+        </div>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-xl">☀</div>
           <div className="flex-1">

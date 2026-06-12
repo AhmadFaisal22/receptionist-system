@@ -19,6 +19,7 @@ export type Purpose = (typeof PURPOSES)[number];
 const id = {
   companyName: "SEG Solar Manufaktur Indonesia",
   checkinTitle: "Buku tamu digital",
+  mainMenu: "Menu utama",
   step1: "Data diri",
   step2: "Kunjungan",
   step3: "Verifikasi & tanda tangan",
@@ -75,6 +76,7 @@ export type Messages = typeof id;
 const en: Messages = {
   companyName: "SEG Solar Manufaktur Indonesia",
   checkinTitle: "Digital visitor log",
+  mainMenu: "Main menu",
   step1: "Your details",
   step2: "Your visit",
   step3: "Verify & sign",
@@ -129,6 +131,7 @@ const en: Messages = {
 const zh: Messages = {
   companyName: "SEG Solar Manufaktur Indonesia",
   checkinTitle: "访客电子登记",
+  mainMenu: "主菜单",
   step1: "个人信息",
   step2: "来访信息",
   step3: "核验与签名",

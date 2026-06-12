@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { dict, LANGS, type Lang } from "@/lib/i18n";
+import BackToMenu from "@/components/BackToMenu";
 
 interface StoredExit {
   token: string;
@@ -58,6 +59,9 @@ export default function CheckoutPage() {
   return (
     <main className="flex-1 flex items-start justify-center p-4">
       <div className="w-full max-w-md rounded-3xl bg-white border border-slate-200 p-6 mt-6 text-center">
+        <div className="mb-3 text-left">
+          <BackToMenu label={t.mainMenu} />
+        </div>
         <div className="flex justify-center gap-2 mb-4">
           {LANGS.map((l) => (
             <button

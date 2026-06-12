@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import BackToMenu from "@/components/BackToMenu";
 
 const HOME_BY_ROLE: Record<string, string> = {
   receptionist: "/dashboard",
@@ -94,6 +95,10 @@ function LoginForm() {
         >
           {busy ? "Signing in…" : "Sign in"}
         </button>
+
+        <div className="mt-4 text-center">
+          <BackToMenu />
+        </div>
       </form>
     </main>
   );

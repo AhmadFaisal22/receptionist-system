@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import BackToMenu from "@/components/BackToMenu";
 
 export default function QrPostersPage() {
   const [origin, setOrigin] = useState("");
@@ -21,12 +22,15 @@ export default function QrPostersPage() {
             Print this page, cut the two posters apart, and laminate them.
           </p>
         </div>
-        <button
-          onClick={() => window.print()}
-          className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm font-medium"
-        >
-          🖨 Print
-        </button>
+        <div className="flex items-center gap-4">
+          <BackToMenu />
+          <button
+            onClick={() => window.print()}
+            className="rounded-xl bg-slate-900 text-white px-4 py-2 text-sm font-medium"
+          >
+            🖨 Print
+          </button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
