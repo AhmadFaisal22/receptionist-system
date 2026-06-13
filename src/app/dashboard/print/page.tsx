@@ -10,16 +10,19 @@ export default async function PrintPage({
 }: {
   searchParams: Promise<{ date?: string; lang?: string }>;
 }) {
-  const session = await requireRole("receptionist", "admin");
+  const session = await requireRole("receptionist", "admin", "guard");
   if (!session) redirect("/login?next=/dashboard");
 
   const sp = await searchParams;
   const date = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : localDate();
   const lang: Lang = sp.lang === "en" || sp.lang === "zh" ? sp.lang : "id";
   const t = staffDict[lang];
+  const zhCols = staffDict.zh.printCols;
   const purposeLabel = (p: string) =>
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
   const visits = (await getStore().listVisits(date)).map(toPublic);
+
+  const cell = "border border-slate-400 px-2 py-1 align-top";
 
   return (
     <main className="flex-1 bg-white p-8 max-w-5xl mx-auto w-full">
@@ -38,9 +41,12 @@ export default async function PrintPage({
       <table className="w-full mt-4 text-xs border-collapse">
         <thead>
           <tr>
-            {t.printCols.map((h) => (
-              <th key={h} className="border border-slate-400 px-2 py-1.5 text-left bg-slate-100">
-                {h}
+            {zhCols.map((zh, i) => (
+              <th key={i} className="border border-slate-400 px-2 py-1.5 text-left bg-slate-100 align-bottom">
+                <div>{zh}</div>
+                {lang !== "zh" && (
+                  <div className="text-[10px] font-normal text-slate-500">{t.printCols[i]}</div>
+                )}
               </th>
             ))}
           </tr>
@@ -48,32 +54,31 @@ export default async function PrintPage({
         <tbody>
           {visits.length === 0 && (
             <tr>
-              <td colSpan={10} className="border border-slate-400 px-2 py-6 text-center text-slate-400">
+              <td colSpan={9} className="border border-slate-400 px-2 py-6 text-center text-slate-400">
                 {t.printNoEntries}
               </td>
             </tr>
           )}
           {visits.map((v) => (
             <tr key={v.id}>
-              <td className="border border-slate-400 px-2 py-1 font-mono">{v.code}</td>
-              <td className="border border-slate-400 px-2 py-1">{date}</td>
-              <td className="border border-slate-400 px-2 py-1">{v.name}</td>
-              <td className="border border-slate-400 px-2 py-1">{v.institution}</td>
-              <td className="border border-slate-400 px-2 py-1">{v.phone}</td>
-              <td className="border border-slate-400 px-2 py-1">{purposeLabel(v.purpose)}</td>
-              <td className="border border-slate-400 px-2 py-1">
-                {v.hostName}
-                {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
+              <td className={`${cell} font-mono`}>{v.code}</td>
+              <td className={cell}>
+                <div>{v.name}</div>
+                {v.institution && <div className="text-[10px] text-slate-500">{v.institution}</div>}
               </td>
-              <td className="border border-slate-400 px-2 py-1">{fmtTime(v.checkinAt)}</td>
-              <td className="border border-slate-400 px-2 py-1">
+              <td className={cell}>{date}</td>
+              <td className={cell}>{fmtTime(v.checkinAt)}</td>
+              <td className={cell}>
                 {fmtTime(v.checkoutAt)}
                 {v.checkoutMethod === "auto" ? " (auto)" : ""}
               </td>
-              <td className="border border-slate-400 px-2 py-1">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={v.signatureDataUrl} alt="ttd" className="h-8 max-w-24 object-contain" />
+              <td className={cell}>{purposeLabel(v.purpose)}</td>
+              <td className={cell}>{v.phone}</td>
+              <td className={cell}>
+                {v.hostName}
+                {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
               </td>
+              <td className={cell}></td>
             </tr>
           ))}
         </tbody>

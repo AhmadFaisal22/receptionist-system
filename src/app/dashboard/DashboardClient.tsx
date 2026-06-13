@@ -92,7 +92,6 @@ export default function DashboardClient({
   const t = staffDict[lang];
   const purposeLabel = (p: string) =>
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
-  const canExport = role !== "guard";
 
   const [visits, setVisits] = useState<PublicVisit[]>([]);
   const [date, setDate] = useState(localDate());
@@ -255,23 +254,19 @@ export default function DashboardClient({
           onChange={(e) => setDate(e.target.value)}
           className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
         />
-        {canExport && (
-          <>
-            <a
-              href={`/api/export/xlsx?date=${date}`}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
-            >
-              ⬇ {t.excel}
-            </a>
-            <a
-              href={`/dashboard/print?date=${date}&lang=${lang}`}
-              target="_blank"
-              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
-            >
-              🖨 {t.pdf}
-            </a>
-          </>
-        )}
+        <a
+          href={`/api/export/xlsx?date=${date}&lang=${lang}`}
+          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
+        >
+          ⬇ {t.excel}
+        </a>
+        <a
+          href={`/dashboard/print?date=${date}&lang=${lang}`}
+          target="_blank"
+          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
+        >
+          🖨 {t.pdf}
+        </a>
       </section>
 
       {variant === "logbook" ? (
