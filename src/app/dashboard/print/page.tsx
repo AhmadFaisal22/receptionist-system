@@ -24,9 +24,13 @@ export default async function PrintPage({
   return (
     <main className="flex-1 bg-white p-8 max-w-5xl mx-auto w-full">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-lg font-bold">SEG SOLAR MANUFAKTUR INDONESIA</h1>
-          <p className="text-sm">{t.printLogBook} — {date}</p>
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/seg-logo.png" alt="SEG Solar" className="h-10 w-auto" />
+          <div>
+            <h1 className="text-lg font-bold">SEG SOLAR MANUFAKTUR INDONESIA</h1>
+            <p className="text-sm">{t.printLogBook} — {date}</p>
+          </div>
         </div>
         <PrintButton />
       </div>

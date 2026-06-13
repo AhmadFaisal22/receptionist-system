@@ -78,11 +78,15 @@ export default function DashboardClient({
   role,
   variant = "modern",
   loginNext = "/dashboard",
+  logoSrc = "/seg-logo.png",
+  logoAlt = "SEG Solar",
 }: {
   user: string;
   role: string;
   variant?: Variant;
   loginNext?: string;
+  logoSrc?: string;
+  logoAlt?: string;
 }) {
   const [lang, setLang] = useLang();
   const t = staffDict[lang];
@@ -182,7 +186,7 @@ export default function DashboardClient({
     <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <Logo className="h-9 w-auto" />
+          <Logo className="h-9 w-auto" src={logoSrc} alt={logoAlt} />
           <div>
             <h1 className="text-base font-semibold leading-tight">
               SEG Solar Manufaktur Indonesia
@@ -254,7 +258,7 @@ export default function DashboardClient({
         {canExport && (
           <>
             <a
-              href={`/api/export/csv?date=${date}`}
+              href={`/api/export/xlsx?date=${date}`}
               className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
             >
               ⬇ {t.excel}
