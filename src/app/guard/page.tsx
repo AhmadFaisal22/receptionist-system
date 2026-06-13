@@ -1,9 +1,17 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import GuardClient from "./GuardClient";
+import DashboardClient from "../dashboard/DashboardClient";
 
 export default async function GuardPage() {
   const session = await requireRole("guard", "admin");
   if (!session) redirect("/login?next=/guard");
-  return <GuardClient user={session.user} />;
+  // Guard gets the same modern dashboard as admin.
+  return (
+    <DashboardClient
+      user={session.user}
+      role={session.role}
+      variant="modern"
+      loginNext="/guard"
+    />
+  );
 }

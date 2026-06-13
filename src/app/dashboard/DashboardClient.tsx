@@ -3,12 +3,33 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { fmtTime, localDate } from "@/lib/dates";
-import { dict, staffDict, type StaffMessages } from "@/lib/i18n";
+import { dict, staffDict, type Lang, type StaffMessages } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { PublicVisit } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
 import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
+
+type Variant = "modern" | "logbook";
+
+// Column headers for the receptionist log-book view, mirroring the official
+// paper form (Chinese on top, selected language below).
+const LOGBOOK_ZH = [
+  "序号",
+  "姓名",
+  "日期",
+  "进入时间",
+  "离开时间",
+  "事由",
+  "联系方式",
+  "SEG对接人员",
+  "备注/物品进出",
+];
+const LOGBOOK_SUB: Record<Lang, string[]> = {
+  id: ["No", "Nama", "Tanggal", "Waktu Masuk", "Waktu Keluar", "Alasan", "Kontak", "Personel SEG", "Catatan/Barang"],
+  en: ["No", "Name", "Date", "Clock in", "Clock out", "Purpose", "Contact", "SEG host", "Notes/Items"],
+  zh: LOGBOOK_ZH,
+};
 
 function StatusPill({ visit, t }: { visit: PublicVisit; t: StaffMessages }) {
   if (visit.status === "pending") {
@@ -52,11 +73,22 @@ function AnimatedNumber({ value }: { value: number }) {
   return <span ref={ref}>{value}</span>;
 }
 
-export default function DashboardClient({ user, role }: { user: string; role: string }) {
+export default function DashboardClient({
+  user,
+  role,
+  variant = "modern",
+  loginNext = "/dashboard",
+}: {
+  user: string;
+  role: string;
+  variant?: Variant;
+  loginNext?: string;
+}) {
   const [lang, setLang] = useLang();
   const t = staffDict[lang];
   const purposeLabel = (p: string) =>
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
+  const canExport = role !== "guard";
 
   const [visits, setVisits] = useState<PublicVisit[]>([]);
   const [date, setDate] = useState(localDate());
@@ -71,7 +103,7 @@ export default function DashboardClient({ user, role }: { user: string; role: st
     try {
       const res = await fetch(`/api/visits?date=${date}`, { cache: "no-store" });
       if (res.status === 401) {
-        window.location.replace("/login?next=/dashboard");
+        window.location.replace(`/login?next=${loginNext}`);
         return;
       }
       if (!res.ok) throw new Error(String(res.status));
@@ -80,7 +112,7 @@ export default function DashboardClient({ user, role }: { user: string; role: st
     } catch {
       setLive(false);
     }
-  }, [date]);
+  }, [date, loginNext]);
 
   useEffect(() => {
     firstLoad.current = true;
@@ -144,6 +176,8 @@ export default function DashboardClient({ user, role }: { user: string; role: st
     window.location.replace("/login");
   }
 
+  const td = "border border-slate-300 px-2 py-1.5 align-top";
+
   return (
     <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
       <header className="flex items-center justify-between gap-3 flex-wrap">
@@ -154,7 +188,7 @@ export default function DashboardClient({ user, role }: { user: string; role: st
               SEG Solar Manufaktur Indonesia
             </h1>
             <p className="text-xs text-slate-500">
-              {t.visitorLog} —{" "}
+              {variant === "logbook" ? "外来人员进出登记表" : t.visitorLog} —{" "}
               {new Date(date + "T00:00:00").toLocaleDateString(t.dateLocale, {
                 weekday: "long",
                 day: "numeric",
@@ -184,23 +218,25 @@ export default function DashboardClient({ user, role }: { user: string; role: st
         </div>
       </header>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
-        {(
-          [
-            [t.statToday, stats.total],
-            [t.statInside, stats.inside],
-            [t.statPending, stats.pending],
-            [t.statCheckedOut, stats.out],
-          ] as const
-        ).map(([label, value]) => (
-          <div key={label} className="rounded-2xl bg-white border border-slate-200 p-4">
-            <p className="text-xs text-slate-500">{label}</p>
-            <p className="text-2xl font-semibold mt-1">
-              <AnimatedNumber value={value} />
-            </p>
-          </div>
-        ))}
-      </section>
+      {variant === "modern" && (
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+          {(
+            [
+              [t.statToday, stats.total],
+              [t.statInside, stats.inside],
+              [t.statPending, stats.pending],
+              [t.statCheckedOut, stats.out],
+            ] as const
+          ).map(([label, value]) => (
+            <div key={label} className="rounded-2xl bg-white border border-slate-200 p-4">
+              <p className="text-xs text-slate-500">{label}</p>
+              <p className="text-2xl font-semibold mt-1">
+                <AnimatedNumber value={value} />
+              </p>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="flex items-center gap-2 mt-5 flex-wrap">
         <input
@@ -215,76 +251,137 @@ export default function DashboardClient({ user, role }: { user: string; role: st
           onChange={(e) => setDate(e.target.value)}
           className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
         />
-        <a
-          href={`/api/export/csv?date=${date}`}
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
-        >
-          ⬇ {t.excel}
-        </a>
-        <a
-          href={`/dashboard/print?date=${date}&lang=${lang}`}
-          target="_blank"
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
-        >
-          🖨 {t.pdf}
-        </a>
+        {canExport && (
+          <>
+            <a
+              href={`/api/export/csv?date=${date}`}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
+            >
+              ⬇ {t.excel}
+            </a>
+            <a
+              href={`/dashboard/print?date=${date}&lang=${lang}`}
+              target="_blank"
+              className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
+            >
+              🖨 {t.pdf}
+            </a>
+          </>
+        )}
       </section>
 
-      <section className="mt-4 rounded-2xl bg-white border border-slate-200 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
-              <th className="px-4 py-3 font-medium">{t.colNo}</th>
-              <th className="px-2 py-3 font-medium">{t.colVisitor}</th>
-              <th className="px-2 py-3 font-medium">{t.colPurpose}</th>
-              <th className="px-2 py-3 font-medium">{t.colHost}</th>
-              <th className="px-2 py-3 font-medium">{t.colIn}</th>
-              <th className="px-2 py-3 font-medium">{t.colOut}</th>
-              <th className="px-2 py-3 font-medium">{t.colStatus}</th>
-              <th className="px-2 py-3 font-medium">{t.colSign}</th>
-            </tr>
-          </thead>
-          <tbody ref={tbodyRef}>
-            {filtered.length === 0 && (
+      {variant === "logbook" ? (
+        <section className="mt-4 bg-white border border-slate-300 overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
-                  {t.emptyToday}
-                </td>
+                {LOGBOOK_ZH.map((zh, i) => (
+                  <th
+                    key={i}
+                    className="border border-slate-300 px-2 py-2 text-left bg-slate-100 align-bottom"
+                  >
+                    <div className="text-[13px] font-medium text-slate-700">{zh}</div>
+                    {lang !== "zh" && (
+                      <div className="text-[10px] text-slate-400 font-normal">
+                        {LOGBOOK_SUB[lang][i]}
+                      </div>
+                    )}
+                  </th>
+                ))}
               </tr>
-            )}
-            {filtered.map((v) => (
-              <tr
-                key={v.id}
-                data-vid={v.id}
-                onClick={() => setSelected(v)}
-                className="border-b border-slate-100 last:border-0 cursor-pointer hover:bg-slate-50"
-              >
-                <td className="px-4 py-2.5 font-mono text-xs">{v.code}</td>
-                <td className="px-2 py-2.5">
-                  <p className="font-medium">{v.name}</p>
-                  <p className="text-xs text-slate-500">{v.institution}</p>
-                </td>
-                <td className="px-2 py-2.5 text-slate-600">{purposeLabel(v.purpose)}</td>
-                <td className="px-2 py-2.5">
-                  <p>{v.hostName}</p>
-                  {v.hostDepartment && (
-                    <p className="text-xs text-slate-500">{v.hostDepartment}</p>
-                  )}
-                </td>
-                <td className="px-2 py-2.5">{fmtTime(v.checkinAt)}</td>
-                <td className="px-2 py-2.5">{fmtTime(v.checkoutAt)}</td>
-                <td className="px-2 py-2.5">
-                  <StatusPill visit={v} t={t} />
-                </td>
-                <td className="px-2 py-2.5">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={v.signatureDataUrl} alt="signature" className="h-6 max-w-16 object-contain" />
-                </td>
+            </thead>
+            <tbody ref={tbodyRef}>
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="border border-slate-300 px-2 py-10 text-center text-slate-400">
+                    {t.emptyToday}
+                  </td>
+                </tr>
+              )}
+              {filtered.map((v) => (
+                <tr
+                  key={v.id}
+                  data-vid={v.id}
+                  onClick={() => setSelected(v)}
+                  className="cursor-pointer hover:bg-slate-50"
+                >
+                  <td className={`${td} font-mono text-xs`}>{v.code}</td>
+                  <td className={td}>
+                    <p className="font-medium">{v.name}</p>
+                    <p className="text-xs text-slate-500">{v.institution}</p>
+                  </td>
+                  <td className={td}>{date}</td>
+                  <td className={td}>{fmtTime(v.checkinAt)}</td>
+                  <td className={td}>{fmtTime(v.checkoutAt)}</td>
+                  <td className={td}>{purposeLabel(v.purpose)}</td>
+                  <td className={td}>{v.phone}</td>
+                  <td className={td}>
+                    {v.hostName}
+                    {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
+                  </td>
+                  <td className={`${td} text-slate-300`}>—</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : (
+        <section className="mt-4 rounded-2xl bg-white border border-slate-200 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
+                <th className="px-4 py-3 font-medium">{t.colNo}</th>
+                <th className="px-2 py-3 font-medium">{t.colVisitor}</th>
+                <th className="px-2 py-3 font-medium">{t.colPurpose}</th>
+                <th className="px-2 py-3 font-medium">{t.colHost}</th>
+                <th className="px-2 py-3 font-medium">{t.colIn}</th>
+                <th className="px-2 py-3 font-medium">{t.colOut}</th>
+                <th className="px-2 py-3 font-medium">{t.colStatus}</th>
+                <th className="px-2 py-3 font-medium">{t.colSign}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody ref={tbodyRef}>
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                    {t.emptyToday}
+                  </td>
+                </tr>
+              )}
+              {filtered.map((v) => (
+                <tr
+                  key={v.id}
+                  data-vid={v.id}
+                  onClick={() => setSelected(v)}
+                  className="border-b border-slate-100 last:border-0 cursor-pointer hover:bg-slate-50"
+                >
+                  <td className="px-4 py-2.5 font-mono text-xs">{v.code}</td>
+                  <td className="px-2 py-2.5">
+                    <p className="font-medium">{v.name}</p>
+                    <p className="text-xs text-slate-500">{v.institution}</p>
+                  </td>
+                  <td className="px-2 py-2.5 text-slate-600">{purposeLabel(v.purpose)}</td>
+                  <td className="px-2 py-2.5">
+                    <p>{v.hostName}</p>
+                    {v.hostDepartment && (
+                      <p className="text-xs text-slate-500">{v.hostDepartment}</p>
+                    )}
+                  </td>
+                  <td className="px-2 py-2.5">{fmtTime(v.checkinAt)}</td>
+                  <td className="px-2 py-2.5">{fmtTime(v.checkoutAt)}</td>
+                  <td className="px-2 py-2.5">
+                    <StatusPill visit={v} t={t} />
+                  </td>
+                  <td className="px-2 py-2.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={v.signatureDataUrl} alt="signature" className="h-6 max-w-16 object-contain" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
 
       <p className="text-xs text-slate-400 mt-3">⟳ {t.autoUpdate}</p>
 
