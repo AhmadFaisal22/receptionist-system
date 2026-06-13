@@ -92,6 +92,7 @@ export default function DashboardClient({
   const t = staffDict[lang];
   const purposeLabel = (p: string) =>
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
+  const logoKey = logoSrc.includes("SIGAP") ? "sigap" : "seg";
 
   const [visits, setVisits] = useState<PublicVisit[]>([]);
   const [date, setDate] = useState(localDate());
@@ -101,6 +102,7 @@ export default function DashboardClient({
   const prevIds = useRef<Set<string>>(new Set());
   const firstLoad = useRef(true);
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
+  const exportQs = `date=${date}&lang=${lang}&variant=${variant}&logo=${logoKey}`;
 
   const load = useCallback(async () => {
     try {
@@ -255,13 +257,13 @@ export default function DashboardClient({
           className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
         />
         <a
-          href={`/api/export/xlsx?date=${date}&lang=${lang}`}
+          href={`/api/export/xlsx?${exportQs}`}
           className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
         >
           ⬇ {t.excel}
         </a>
         <a
-          href={`/dashboard/print?date=${date}&lang=${lang}`}
+          href={`/dashboard/print?${exportQs}`}
           target="_blank"
           className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
         >

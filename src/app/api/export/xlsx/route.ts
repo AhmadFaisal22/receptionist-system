@@ -6,11 +6,13 @@ import { getStore, localDate } from "@/lib/store";
 
 export const runtime = "nodejs";
 
-// Log-book columns, matching the receptionist dashboard view / paper form.
-const WIDTHS = [12, 24, 12, 13, 13, 20, 18, 26, 22];
-
 const thin = { style: "thin" as const, color: { argb: "FFCBD5E1" } };
 const border = { top: thin, left: thin, bottom: thin, right: thin };
+const headerFill = {
+  type: "pattern" as const,
+  pattern: "solid" as const,
+  fgColor: { argb: "FFF1F5F9" },
+};
 
 export async function GET(req: Request) {
   const session = await requireRole("receptionist", "admin", "guard");
@@ -21,26 +23,31 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const raw = url.searchParams.get("date");
   const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : localDate();
-  const langParam = url.searchParams.get("lang");
-  const lang: Lang = langParam === "en" || langParam === "zh" ? langParam : "id";
+  const lp = url.searchParams.get("lang");
+  const lang: Lang = lp === "en" || lp === "zh" ? lp : "id";
+  const variant = url.searchParams.get("variant") === "modern" ? "modern" : "logbook";
+  const logoKey = url.searchParams.get("logo") === "sigap" ? "sigap" : "seg";
+  const logoFile = logoKey === "sigap" ? "/SIGAP.png" : "/seg-logo.png";
+
   const t = staffDict[lang];
-  const zhCols = staffDict.zh.printCols;
   const purposeLabel = (p: string) =>
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
+  const statusLabel = (s: string) =>
+    s === "pending" ? t.stPending : s === "checked_in" ? t.stInside : t.stOut;
   const visits = await getStore().listVisits(date);
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Visitors");
-  ws.columns = WIDTHS.map((w) => ({ width: w }));
 
   // Logo top-left. public/ isn't on the serverless filesystem, so fetch the
   // asset from the same origin (served by the CDN) and embed it.
   try {
-    const logoRes = await fetch(new URL("/seg-logo.png", req.url));
+    const logoRes = await fetch(new URL(logoFile, req.url));
     if (logoRes.ok) {
       const buffer = await logoRes.arrayBuffer();
       const imageId = wb.addImage({ buffer, extension: "png" });
-      ws.addImage(imageId, { tl: { col: 0, row: 0 }, ext: { width: 180, height: 56 } });
+      const ext = logoKey === "sigap" ? { width: 52, height: 52 } : { width: 180, height: 56 };
+      ws.addImage(imageId, { tl: { col: 0, row: 0 }, ext });
     }
   } catch {
     // no logo — export still works
@@ -55,37 +62,99 @@ export async function GET(req: Request) {
   ws.getCell("A5").font = { size: 11, color: { argb: "FF64748B" } };
 
   const headerRowNo = 7;
-  const headerRow = ws.getRow(headerRowNo);
-  headerRow.height = 30;
-  zhCols.forEach((zh, i) => {
-    const c = headerRow.getCell(i + 1);
-    c.value = lang === "zh" ? zh : `${zh}\n${t.printCols[i]}`;
-    c.font = { bold: true, color: { argb: "FF0F172A" } };
-    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } };
-    c.alignment = { vertical: "middle", wrapText: true };
-    c.border = border;
-  });
 
-  visits.forEach((v, idx) => {
-    const row = ws.getRow(headerRowNo + 1 + idx);
-    const values = [
-      v.code,
-      v.institution ? `${v.name}\n${v.institution}` : v.name,
-      date,
-      fmtTime(v.checkinAt),
-      v.checkoutMethod === "auto" ? `${fmtTime(v.checkoutAt)} (auto)` : fmtTime(v.checkoutAt),
-      purposeLabel(v.purpose),
-      v.phone,
-      v.hostDepartment ? `${v.hostName} (${v.hostDepartment})` : v.hostName,
-      "",
+  if (variant === "modern") {
+    // Same columns as the admin/guard dashboard.
+    ws.columns = [12, 28, 20, 26, 12, 13, 12, 24].map((w) => ({ width: w }));
+    const headers = [
+      t.colNo,
+      t.colVisitor,
+      t.colPurpose,
+      t.colHost,
+      t.colIn,
+      t.colOut,
+      t.colStatus,
+      t.colSign,
     ];
-    values.forEach((val, i) => {
-      const c = row.getCell(i + 1);
-      c.value = val;
-      c.alignment = { vertical: "middle", wrapText: i === 1 };
+    const hr = ws.getRow(headerRowNo);
+    headers.forEach((h, i) => {
+      const c = hr.getCell(i + 1);
+      c.value = h;
+      c.font = { bold: true, color: { argb: "FF0F172A" } };
+      c.fill = headerFill;
+      c.alignment = { vertical: "middle", wrapText: true };
       c.border = border;
     });
-  });
+    const SIGN_COL = 8;
+    visits.forEach((v, idx) => {
+      const rowNo = headerRowNo + 1 + idx;
+      const row = ws.getRow(rowNo);
+      row.height = 26;
+      const values = [
+        v.code,
+        v.institution ? `${v.name}\n${v.institution}` : v.name,
+        purposeLabel(v.purpose),
+        v.hostDepartment ? `${v.hostName} (${v.hostDepartment})` : v.hostName,
+        fmtTime(v.checkinAt),
+        v.checkoutMethod === "auto" ? `${fmtTime(v.checkoutAt)} (auto)` : fmtTime(v.checkoutAt),
+        statusLabel(v.status),
+        "",
+      ];
+      values.forEach((val, i) => {
+        const c = row.getCell(i + 1);
+        c.value = val;
+        c.alignment = { vertical: "middle", wrapText: i === 1 };
+        c.border = border;
+      });
+      // Embed the signature image in the Sign column.
+      try {
+        const b64 = v.signatureDataUrl.split(",")[1];
+        if (b64) {
+          const imgId = wb.addImage({ base64: b64, extension: "png" });
+          ws.addImage(imgId, {
+            tl: { col: SIGN_COL - 1, row: rowNo - 1 },
+            ext: { width: 100, height: 24 },
+          });
+        }
+      } catch {
+        // skip a bad signature
+      }
+    });
+  } else {
+    // Log-book columns, matching the receptionist view / paper form.
+    ws.columns = [12, 24, 12, 13, 13, 20, 18, 26, 22].map((w) => ({ width: w }));
+    const zhCols = staffDict.zh.printCols;
+    const hr = ws.getRow(headerRowNo);
+    hr.height = 30;
+    zhCols.forEach((zh, i) => {
+      const c = hr.getCell(i + 1);
+      c.value = lang === "zh" ? zh : `${zh}\n${t.printCols[i]}`;
+      c.font = { bold: true, color: { argb: "FF0F172A" } };
+      c.fill = headerFill;
+      c.alignment = { vertical: "middle", wrapText: true };
+      c.border = border;
+    });
+    visits.forEach((v, idx) => {
+      const row = ws.getRow(headerRowNo + 1 + idx);
+      const values = [
+        v.code,
+        v.institution ? `${v.name}\n${v.institution}` : v.name,
+        date,
+        fmtTime(v.checkinAt),
+        v.checkoutMethod === "auto" ? `${fmtTime(v.checkoutAt)} (auto)` : fmtTime(v.checkoutAt),
+        purposeLabel(v.purpose),
+        v.phone,
+        v.hostDepartment ? `${v.hostName} (${v.hostDepartment})` : v.hostName,
+        "",
+      ];
+      values.forEach((val, i) => {
+        const c = row.getCell(i + 1);
+        c.value = val;
+        c.alignment = { vertical: "middle", wrapText: i === 1 };
+        c.border = border;
+      });
+    });
+  }
 
   const out = await wb.xlsx.writeBuffer();
   return new Response(out as ArrayBuffer, {
