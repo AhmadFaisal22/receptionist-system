@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import { fmtDate, fmtTime } from "@/lib/dates";
+import { fmtDate, fmtDateTime, fmtTime } from "@/lib/dates";
 import { dict, staffDict, type Lang } from "@/lib/i18n";
 import { getStore, localDate, toPublic } from "@/lib/store";
 import PrintButton from "./PrintButton";
@@ -144,7 +144,7 @@ export default async function PrintPage({
       )}
 
       <p className="text-xs text-slate-500 mt-4">
-        {t.printGeneratedBy} — {new Date().toLocaleString(t.dateLocale)}
+        {t.printGeneratedBy} — {fmtDateTime(new Date(), t.dateLocale)} WIB
       </p>
     </main>
   );
