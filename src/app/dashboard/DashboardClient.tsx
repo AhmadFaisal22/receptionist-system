@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { gsap } from "gsap";
-import { fmtTime, localDate } from "@/lib/dates";
+import { fmtDate, fmtTime, localDate } from "@/lib/dates";
 import { dict, staffDict, type Lang, type StaffMessages } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { PublicVisit } from "@/lib/types";
@@ -96,17 +96,22 @@ export default function DashboardClient({
 
   const [visits, setVisits] = useState<PublicVisit[]>([]);
   const [date, setDate] = useState(localDate());
+  const [showAll, setShowAll] = useState(false);
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<PublicVisit | null>(null);
   const [live, setLive] = useState(false);
   const prevIds = useRef<Set<string>>(new Set());
   const firstLoad = useRef(true);
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
-  const exportQs = `date=${date}&lang=${lang}&variant=${variant}&logo=${logoKey}`;
+  const exportQs = showAll
+    ? `all=1&lang=${lang}&variant=${variant}&logo=${logoKey}`
+    : `date=${date}&lang=${lang}&variant=${variant}&logo=${logoKey}`;
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`/api/visits?date=${date}`, { cache: "no-store" });
+      const res = await fetch(showAll ? `/api/visits?all=1` : `/api/visits?date=${date}`, {
+        cache: "no-store",
+      });
       if (res.status === 401) {
         window.location.replace(`/login?next=${loginNext}`);
         return;
@@ -117,7 +122,7 @@ export default function DashboardClient({
     } catch {
       setLive(false);
     }
-  }, [date, loginNext]);
+  }, [date, showAll, loginNext]);
 
   useEffect(() => {
     firstLoad.current = true;
@@ -253,9 +258,20 @@ export default function DashboardClient({
         <input
           type="date"
           value={date}
+          disabled={showAll}
           onChange={(e) => setDate(e.target.value)}
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:opacity-40"
         />
+        <button
+          onClick={() => setShowAll((s) => !s)}
+          className={`rounded-xl border px-3 py-2 text-sm ${
+            showAll
+              ? "bg-slate-900 text-white border-slate-900"
+              : "bg-white text-slate-600 border-slate-300 hover:border-slate-400"
+          }`}
+        >
+          {showAll ? t.viewByDate : t.viewAll}
+        </button>
         <a
           href={`/api/export/xlsx?${exportQs}`}
           className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
@@ -299,19 +315,19 @@ export default function DashboardClient({
                   </td>
                 </tr>
               )}
-              {filtered.map((v) => (
+              {filtered.map((v, i) => (
                 <tr
                   key={v.id}
                   data-vid={v.id}
                   onClick={() => setSelected(v)}
                   className="cursor-pointer hover:bg-slate-50"
                 >
-                  <td className={`${td} font-mono text-xs`}>{v.code}</td>
+                  <td className={td}>{i + 1}</td>
                   <td className={td}>
                     <p className="font-medium">{v.name}</p>
                     <p className="text-xs text-slate-500">{v.institution}</p>
                   </td>
-                  <td className={td}>{date}</td>
+                  <td className={td}>{fmtDate(v.submittedAt)}</td>
                   <td className={td}>{fmtTime(v.checkinAt)}</td>
                   <td className={td}>{fmtTime(v.checkoutAt)}</td>
                   <td className={td}>{purposeLabel(v.purpose)}</td>
@@ -349,14 +365,14 @@ export default function DashboardClient({
                   </td>
                 </tr>
               )}
-              {filtered.map((v) => (
+              {filtered.map((v, i) => (
                 <tr
                   key={v.id}
                   data-vid={v.id}
                   onClick={() => setSelected(v)}
                   className="border-b border-slate-100 last:border-0 cursor-pointer hover:bg-slate-50"
                 >
-                  <td className="px-4 py-2.5 font-mono text-xs">{v.code}</td>
+                  <td className="px-4 py-2.5">{i + 1}</td>
                   <td className="px-2 py-2.5">
                     <p className="font-medium">{v.name}</p>
                     <p className="text-xs text-slate-500">{v.institution}</p>

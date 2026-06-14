@@ -104,6 +104,18 @@ export class SupabaseStore implements Store {
     return ((data ?? []) as VisitRow[]).map(mapVisit);
   }
 
+  async listAllVisits(): Promise<Visit[]> {
+    await this.db.rpc("auto_close_stale");
+    await this.db.rpc("purge_expired_photos", { retention_days: PHOTO_RETENTION_DAYS });
+    const { data, error } = await this.db
+      .from("visits")
+      .select()
+      .order("submitted_at", { ascending: false })
+      .limit(5000);
+    if (error) throw error;
+    return ((data ?? []) as VisitRow[]).map(mapVisit);
+  }
+
   async getVisit(id: string): Promise<Visit | null> {
     const { data, error } = await this.db.from("visits").select().eq("id", id).maybeSingle();
     if (error) throw error;

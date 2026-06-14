@@ -6,21 +6,25 @@ const LINKS = [
     href: "/checkin",
     title: "Visitor check-in",
     desc: "Buku tamu digital — form for visitors at the gate",
+    cls: "bg-green-50 border-green-300 hover:border-green-500",
   },
   {
     href: "/checkout",
     title: "Visitor check-out",
     desc: "Exit QR target — one-tap clock out",
+    cls: "bg-red-50 border-red-300 hover:border-red-500",
   },
   {
     href: "/login",
     title: "Staff login",
     desc: "Receptionist dashboard, guard view, admin",
+    cls: "bg-white border-slate-200 hover:border-slate-400",
   },
   {
     href: "/qr",
     title: "QR posters",
     desc: "Print the CHECK IN / CHECK OUT posters for the security post",
+    cls: "bg-white border-slate-200 hover:border-slate-400",
   },
 ] as const;
 
@@ -41,7 +45,7 @@ export default function Home() {
           <Link
             key={l.href}
             href={l.href}
-            className="block rounded-2xl bg-white border border-slate-200 p-4 hover:border-slate-400 transition-colors"
+            className={`block rounded-2xl border p-4 transition-colors ${l.cls}`}
           >
             <p className="font-medium">{l.title}</p>
             <p className="text-sm text-slate-500">{l.desc}</p>

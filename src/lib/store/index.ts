@@ -9,6 +9,8 @@ export interface Store {
   createVisit(input: CheckinInput): Promise<Visit>;
   /** date is a local yyyy-mm-dd string */
   listVisits(date: string): Promise<Visit[]>;
+  /** every visit, newest first (capped) — for the "view all" mode */
+  listAllVisits(): Promise<Visit[]>;
   getVisit(id: string): Promise<Visit | null>;
   confirmVisit(id: string): Promise<Visit | null>;
   checkoutVisit(id: string, method: CheckoutMethod): Promise<Visit | null>;

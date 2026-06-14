@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import { fmtTime } from "@/lib/dates";
+import { fmtDate, fmtTime } from "@/lib/dates";
 import { dict, staffDict, type Lang } from "@/lib/i18n";
 import { getStore, localDate, toPublic } from "@/lib/store";
 import PrintButton from "./PrintButton";
@@ -8,13 +8,14 @@ import PrintButton from "./PrintButton";
 export default async function PrintPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; lang?: string; variant?: string; logo?: string }>;
+  searchParams: Promise<{ date?: string; lang?: string; variant?: string; logo?: string; all?: string }>;
 }) {
   const session = await requireRole("receptionist", "admin", "guard");
   if (!session) redirect("/login?next=/dashboard");
 
   const sp = await searchParams;
   const date = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : localDate();
+  const all = sp.all === "1";
   const lang: Lang = sp.lang === "en" || sp.lang === "zh" ? sp.lang : "id";
   const variant = sp.variant === "modern" ? "modern" : "logbook";
   const logoFile = sp.logo === "sigap" ? "/SIGAP.png" : "/seg-logo.png";
@@ -23,7 +24,9 @@ export default async function PrintPage({
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
   const statusLabel = (s: string) =>
     s === "pending" ? t.stPending : s === "checked_in" ? t.stInside : t.stOut;
-  const visits = (await getStore().listVisits(date)).map(toPublic);
+  const store = getStore();
+  const visits = (all ? await store.listAllVisits() : await store.listVisits(date)).map(toPublic);
+  const subtitle = all ? t.viewAll : date;
 
   const cell = "border border-slate-400 px-2 py-1 align-top";
 
@@ -39,7 +42,7 @@ export default async function PrintPage({
           />
           <div>
             <h1 className="text-lg font-bold">SEG SOLAR MANUFAKTUR INDONESIA</h1>
-            <p className="text-sm">{t.printLogBook} — {date}</p>
+            <p className="text-sm">{t.printLogBook} — {subtitle}</p>
           </div>
         </div>
         <PrintButton />
@@ -66,9 +69,9 @@ export default async function PrintPage({
                 </td>
               </tr>
             )}
-            {visits.map((v) => (
+            {visits.map((v, idx) => (
               <tr key={v.id}>
-                <td className={`${cell} font-mono`}>{v.code}</td>
+                <td className={cell}>{idx + 1}</td>
                 <td className={cell}>
                   <div>{v.name}</div>
                   {v.institution && <div className="text-[10px] text-slate-500">{v.institution}</div>}
@@ -114,14 +117,14 @@ export default async function PrintPage({
                 </td>
               </tr>
             )}
-            {visits.map((v) => (
+            {visits.map((v, idx) => (
               <tr key={v.id}>
-                <td className={`${cell} font-mono`}>{v.code}</td>
+                <td className={cell}>{idx + 1}</td>
                 <td className={cell}>
                   <div>{v.name}</div>
                   {v.institution && <div className="text-[10px] text-slate-500">{v.institution}</div>}
                 </td>
-                <td className={cell}>{date}</td>
+                <td className={cell}>{fmtDate(v.submittedAt)}</td>
                 <td className={cell}>{fmtTime(v.checkinAt)}</td>
                 <td className={cell}>
                   {fmtTime(v.checkoutAt)}

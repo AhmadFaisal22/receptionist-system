@@ -57,7 +57,7 @@ export default function CheckoutPage() {
     "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-slate-500";
 
   return (
-    <main className="flex-1 flex items-start justify-center p-4">
+    <main className="flex-1 flex items-start justify-center p-4 bg-red-50">
       <div className="w-full max-w-md rounded-3xl bg-white border border-slate-200 p-6 mt-6 text-center">
         <div className="mb-3 text-left">
           <BackToMenu label={t.mainMenu} />

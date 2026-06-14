@@ -8,8 +8,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const raw = new URL(req.url).searchParams.get("date");
-  const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : localDate();
-  const visits = await getStore().listVisits(date);
+  const params = new URL(req.url).searchParams;
+  const store = getStore();
+  const visits =
+    params.get("all") === "1"
+      ? await store.listAllVisits()
+      : await store.listVisits(
+          params.get("date") && /^\d{4}-\d{2}-\d{2}$/.test(params.get("date")!)
+            ? params.get("date")!
+            : localDate(),
+        );
   return NextResponse.json(visits.map(toPublic));
 }

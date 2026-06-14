@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import { requireRole } from "@/lib/auth";
-import { fmtTime } from "@/lib/dates";
+import { fmtDate, fmtTime } from "@/lib/dates";
 import { dict, staffDict, type Lang } from "@/lib/i18n";
 import { getStore, localDate } from "@/lib/store";
 
@@ -23,6 +23,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const raw = url.searchParams.get("date");
   const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : localDate();
+  const all = url.searchParams.get("all") === "1";
   const lp = url.searchParams.get("lang");
   const lang: Lang = lp === "en" || lp === "zh" ? lp : "id";
   const variant = url.searchParams.get("variant") === "modern" ? "modern" : "logbook";
@@ -34,7 +35,9 @@ export async function GET(req: Request) {
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
   const statusLabel = (s: string) =>
     s === "pending" ? t.stPending : s === "checked_in" ? t.stInside : t.stOut;
-  const visits = await getStore().listVisits(date);
+  const store = getStore();
+  const visits = all ? await store.listAllVisits() : await store.listVisits(date);
+  const subtitle = all ? t.viewAll : date;
 
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Visitors");
@@ -58,7 +61,7 @@ export async function GET(req: Request) {
 
   ws.getCell("A4").value = "SEG SOLAR MANUFAKTUR INDONESIA";
   ws.getCell("A4").font = { bold: true, size: 14 };
-  ws.getCell("A5").value = `${t.printLogBook} — ${date}`;
+  ws.getCell("A5").value = `${t.printLogBook} — ${subtitle}`;
   ws.getCell("A5").font = { size: 11, color: { argb: "FF64748B" } };
 
   const headerRowNo = 7;
@@ -91,7 +94,7 @@ export async function GET(req: Request) {
       const row = ws.getRow(rowNo);
       row.height = 26;
       const values = [
-        v.code,
+        idx + 1,
         v.institution ? `${v.name}\n${v.institution}` : v.name,
         purposeLabel(v.purpose),
         v.hostDepartment ? `${v.hostName} (${v.hostDepartment})` : v.hostName,
@@ -137,9 +140,9 @@ export async function GET(req: Request) {
     visits.forEach((v, idx) => {
       const row = ws.getRow(headerRowNo + 1 + idx);
       const values = [
-        v.code,
+        idx + 1,
         v.institution ? `${v.name}\n${v.institution}` : v.name,
-        date,
+        fmtDate(v.submittedAt),
         fmtTime(v.checkinAt),
         v.checkoutMethod === "auto" ? `${fmtTime(v.checkoutAt)} (auto)` : fmtTime(v.checkoutAt),
         purposeLabel(v.purpose),

@@ -86,6 +86,11 @@ export class MemoryStore implements Store {
       .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
   }
 
+  async listAllVisits(): Promise<Visit[]> {
+    this.maintenance();
+    return [...this.visits].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  }
+
   async getVisit(id: string): Promise<Visit | null> {
     this.maintenance();
     return this.visits.find((v) => v.id === id) ?? null;
