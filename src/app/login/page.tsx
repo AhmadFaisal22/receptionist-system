@@ -105,15 +105,17 @@ function LoginForm() {
   return (
     <main className="flex-1 flex items-center justify-center p-4">
       <form onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 p-6">
-        <div className="flex items-center justify-between gap-3 mb-5">
+        <div className="mb-5">
+          <div className="mb-3 flex justify-end">
+            <LangToggle lang={lang} setLang={setLang} />
+          </div>
           <div className="flex items-center gap-3">
-            <Logo className="h-9 w-auto" />
+            <Logo className="h-9 w-auto shrink-0" />
             <div>
               <p className="text-sm font-semibold leading-tight">SEG Solar Manufaktur Indonesia</p>
               <p className="text-xs text-slate-500">{t.staffLogin}</p>
             </div>
           </div>
-          <LangToggle lang={lang} setLang={setLang} />
         </div>
 
         <label className="block text-sm text-slate-600 mb-1">{t.role}</label>
