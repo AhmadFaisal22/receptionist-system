@@ -274,16 +274,20 @@ export default function DashboardClient({
         </button>
         <a
           href={`/api/export/xlsx?${exportQs}`}
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
         >
-          ⬇ {t.excel}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/excel.svg" alt="" className="h-4 w-4" />
+          {t.excel}
         </a>
         <a
           href={`/dashboard/print?${exportQs}`}
           target="_blank"
-          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
         >
-          🖨 {t.pdf}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/pdf.svg" alt="" className="h-4 w-4" />
+          {t.pdf}
         </a>
       </section>
 
