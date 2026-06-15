@@ -1,5 +1,5 @@
 import type { CheckoutMethod, Employee, PublicVisit, Visit } from "../types";
-import type { CheckinInput } from "../validation";
+import type { CheckinInput, VisitUpdateInput } from "../validation";
 import { MemoryStore } from "./memory";
 import { SupabaseStore } from "./supabase";
 
@@ -14,6 +14,9 @@ export interface Store {
   getVisit(id: string): Promise<Visit | null>;
   confirmVisit(id: string): Promise<Visit | null>;
   checkoutVisit(id: string, method: CheckoutMethod): Promise<Visit | null>;
+  /** Receptionist edit of visitor details (not times/status). */
+  updateVisit(id: string, patch: VisitUpdateInput): Promise<Visit | null>;
+  deleteVisit(id: string): Promise<boolean>;
   findByExitToken(token: string): Promise<Visit | null>;
   findByCodeAndPhone(code: string, phone: string): Promise<Visit | null>;
   listEmployees(q?: string, includeInactive?: boolean): Promise<Employee[]>;

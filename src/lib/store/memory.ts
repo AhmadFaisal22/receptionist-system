@@ -3,7 +3,7 @@ import { PHOTO_RETENTION_DAYS } from "../config";
 import { localDate } from "../dates";
 import { phonesMatch } from "../phone";
 import type { CheckoutMethod, Employee, Visit } from "../types";
-import type { CheckinInput } from "../validation";
+import type { CheckinInput, VisitUpdateInput } from "../validation";
 import type { Store } from "./index";
 
 const SEED_EMPLOYEES: Omit<Employee, "id">[] = [
@@ -112,6 +112,19 @@ export class MemoryStore implements Store {
     v.checkoutAt = new Date().toISOString();
     v.checkoutMethod = method;
     return v;
+  }
+
+  async updateVisit(id: string, patch: VisitUpdateInput): Promise<Visit | null> {
+    const v = await this.getVisit(id);
+    if (!v) return null;
+    Object.assign(v, patch);
+    return v;
+  }
+
+  async deleteVisit(id: string): Promise<boolean> {
+    const before = this.visits.length;
+    this.visits = this.visits.filter((v) => v.id !== id);
+    return this.visits.length < before;
   }
 
   async findByExitToken(token: string): Promise<Visit | null> {

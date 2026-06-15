@@ -80,6 +80,7 @@ export default function DashboardClient({
   loginNext = "/dashboard",
   logoSrc = "/seg-logo.png",
   logoAlt = "SEG Solar",
+  canEdit = false,
 }: {
   user: string;
   role: string;
@@ -87,6 +88,8 @@ export default function DashboardClient({
   loginNext?: string;
   logoSrc?: string;
   logoAlt?: string;
+  /** Show edit/delete controls in the detail drawer (receptionist only). */
+  canEdit?: boolean;
 }) {
   const [lang, setLang] = useLang();
   const t = staffDict[lang];
@@ -99,6 +102,17 @@ export default function DashboardClient({
   const [showAll, setShowAll] = useState(false);
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<PublicVisit | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    institution: "",
+    phone: "",
+    purpose: "",
+    hostName: "",
+    hostDepartment: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const [editError, setEditError] = useState("");
   const [live, setLive] = useState(false);
   const prevIds = useRef<Set<string>>(new Set());
   const firstLoad = useRef(true);
@@ -179,6 +193,58 @@ export default function DashboardClient({
     await fetch(`/api/visits/${visit.id}/${kind}`, { method: "POST" });
     setSelected(null);
     load();
+  }
+
+  function startEdit(v: PublicVisit) {
+    setForm({
+      name: v.name,
+      institution: v.institution,
+      phone: v.phone,
+      purpose: v.purpose,
+      hostName: v.hostName,
+      hostDepartment: v.hostDepartment ?? "",
+    });
+    setEditError("");
+    setEditing(true);
+  }
+
+  async function saveEdit(visit: PublicVisit) {
+    setBusy(true);
+    setEditError("");
+    try {
+      const res = await fetch(`/api/visits/${visit.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        setEditError(t.addError);
+        return;
+      }
+      const updated = (await res.json()) as PublicVisit;
+      setSelected(updated);
+      setEditing(false);
+      load();
+    } catch {
+      setEditError(t.networkError);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteVisit(visit: PublicVisit) {
+    if (!window.confirm(t.confirmDeleteVisit)) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/visits/${visit.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setSelected(null);
+        setEditing(false);
+        load();
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function logout() {
@@ -409,7 +475,10 @@ export default function DashboardClient({
       {selected && (
         <div
           className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-20"
-          onClick={() => setSelected(null)}
+          onClick={() => {
+            setSelected(null);
+            setEditing(false);
+          }}
         >
           <div
             className="w-full max-w-md rounded-3xl bg-white p-6 max-h-[90vh] overflow-y-auto"
@@ -418,72 +487,133 @@ export default function DashboardClient({
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-mono text-xs text-slate-500">{selected.code}</p>
-                <h2 className="text-lg font-semibold">{selected.name}</h2>
-                <p className="text-sm text-slate-500">{selected.institution}</p>
+                <h2 className="text-lg font-semibold">{editing ? t.editTitle : selected.name}</h2>
+                {!editing && <p className="text-sm text-slate-500">{selected.institution}</p>}
               </div>
               <StatusPill visit={selected} t={t} />
             </div>
-            <div className="flex gap-3 mt-4">
-              {selected.photoDataUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={selected.photoDataUrl}
-                  alt="visitor"
-                  className="w-24 h-24 rounded-2xl object-cover border border-slate-200"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
-                  {t.noPhoto}
+
+            {editing ? (
+              <div className="mt-4 space-y-3 text-sm">
+                {(
+                  [
+                    ["name", t.fullName],
+                    ["institution", t.institutionLabel],
+                    ["phone", t.phoneLabel],
+                    ["purpose", t.colPurpose],
+                    ["hostName", t.colHost],
+                    ["hostDepartment", t.department],
+                  ] as const
+                ).map(([field, label]) => (
+                  <div key={field}>
+                    <label className="block text-xs text-slate-500 mb-1">{label}</label>
+                    <input
+                      value={form[field]}
+                      onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-slate-500"
+                    />
+                  </div>
+                ))}
+                {editError && <p className="text-red-600 text-xs">{editError}</p>}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => saveEdit(selected)}
+                    disabled={busy}
+                    className="flex-1 rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm font-medium disabled:opacity-50"
+                  >
+                    {busy ? t.savingEdit : t.saveEdit}
+                  </button>
+                  <button
+                    onClick={() => setEditing(false)}
+                    disabled={busy}
+                    className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-600"
+                  >
+                    {t.cancelEdit}
+                  </button>
                 </div>
-              )}
-              <div className="flex-1 text-sm space-y-1.5">
-                <p>
-                  <span className="text-slate-500">{t.phoneLabel}:</span> {selected.phone}
-                </p>
-                <p>
-                  <span className="text-slate-500">{t.colPurpose}:</span>{" "}
-                  {purposeLabel(selected.purpose)}
-                </p>
-                <p>
-                  <span className="text-slate-500">{t.colHost}:</span> {selected.hostName}
-                  {selected.hostDepartment ? ` — ${selected.hostDepartment}` : ""}
-                </p>
-                <p>
-                  <span className="text-slate-500">{t.colIn}:</span> {fmtTime(selected.checkinAt)}{" "}
-                  <span className="text-slate-500 ml-2">{t.colOut}:</span>{" "}
-                  {fmtTime(selected.checkoutAt)}
-                </p>
               </div>
-            </div>
-            <p className="text-xs text-slate-500 mt-4 mb-1">{t.signatureLabel}</p>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={selected.signatureDataUrl} alt="signature" className="h-16 mx-auto object-contain" />
-            </div>
-            <div className="flex gap-2 mt-5">
-              {selected.status === "pending" && (
-                <button
-                  onClick={() => action(selected, "confirm")}
-                  className="flex-1 rounded-xl bg-green-600 text-white px-4 py-2.5 text-sm font-medium"
-                >
-                  {t.confirmArrival}
-                </button>
-              )}
-              {selected.status !== "checked_out" && (
-                <button
-                  onClick={() => action(selected, "checkout")}
-                  className="flex-1 rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm font-medium"
-                >
-                  {t.clockOut}
-                </button>
-              )}
-              <button
-                onClick={() => setSelected(null)}
-                className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-600"
-              >
-                {t.close}
-              </button>
-            </div>
+            ) : (
+              <>
+                <div className="flex gap-3 mt-4">
+                  {selected.photoDataUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={selected.photoDataUrl}
+                      alt="visitor"
+                      className="w-24 h-24 rounded-2xl object-cover border border-slate-200"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
+                      {t.noPhoto}
+                    </div>
+                  )}
+                  <div className="flex-1 text-sm space-y-1.5">
+                    <p>
+                      <span className="text-slate-500">{t.phoneLabel}:</span> {selected.phone}
+                    </p>
+                    <p>
+                      <span className="text-slate-500">{t.colPurpose}:</span>{" "}
+                      {purposeLabel(selected.purpose)}
+                    </p>
+                    <p>
+                      <span className="text-slate-500">{t.colHost}:</span> {selected.hostName}
+                      {selected.hostDepartment ? ` — ${selected.hostDepartment}` : ""}
+                    </p>
+                    <p>
+                      <span className="text-slate-500">{t.colIn}:</span> {fmtTime(selected.checkinAt)}{" "}
+                      <span className="text-slate-500 ml-2">{t.colOut}:</span>{" "}
+                      {fmtTime(selected.checkoutAt)}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 mt-4 mb-1">{t.signatureLabel}</p>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={selected.signatureDataUrl} alt="signature" className="h-16 mx-auto object-contain" />
+                </div>
+                <div className="flex flex-wrap gap-2 mt-5">
+                  {selected.status === "pending" && (
+                    <button
+                      onClick={() => action(selected, "confirm")}
+                      className="flex-1 rounded-xl bg-green-600 text-white px-4 py-2.5 text-sm font-medium"
+                    >
+                      {t.confirmArrival}
+                    </button>
+                  )}
+                  {selected.status !== "checked_out" && (
+                    <button
+                      onClick={() => action(selected, "checkout")}
+                      className="flex-1 rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm font-medium"
+                    >
+                      {t.clockOut}
+                    </button>
+                  )}
+                  {canEdit && (
+                    <>
+                      <button
+                        onClick={() => startEdit(selected)}
+                        className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-700 hover:border-slate-400"
+                      >
+                        {t.editVisit}
+                      </button>
+                      <button
+                        onClick={() => deleteVisit(selected)}
+                        disabled={busy}
+                        className="rounded-xl border border-red-300 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {t.deleteVisit}
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-600"
+                  >
+                    {t.close}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

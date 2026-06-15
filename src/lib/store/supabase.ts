@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { PHOTO_RETENTION_DAYS } from "../config";
 import { phonesMatch } from "../phone";
 import type { CheckoutMethod, Employee, Lang, Visit, VisitStatus } from "../types";
-import type { CheckinInput } from "../validation";
+import type { CheckinInput, VisitUpdateInput } from "../validation";
 import type { Store } from "./index";
 
 // Production store. The service-role key is server-only (never NEXT_PUBLIC_)
@@ -147,6 +147,34 @@ export class SupabaseStore implements Store {
       .neq("status", "checked_out");
     if (error) throw error;
     return this.getVisit(id);
+  }
+
+  async updateVisit(id: string, patch: VisitUpdateInput): Promise<Visit | null> {
+    const row: Record<string, string> = {};
+    if (patch.name !== undefined) row.name = patch.name;
+    if (patch.institution !== undefined) row.institution = patch.institution;
+    if (patch.phone !== undefined) row.phone = patch.phone;
+    if (patch.purpose !== undefined) row.purpose = patch.purpose;
+    if (patch.hostName !== undefined) row.host_name = patch.hostName;
+    if (patch.hostDepartment !== undefined) row.host_department = patch.hostDepartment;
+    if (Object.keys(row).length === 0) return this.getVisit(id);
+    const { data, error } = await this.db
+      .from("visits")
+      .update(row)
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+    if (error) throw error;
+    return data ? mapVisit(data as VisitRow) : null;
+  }
+
+  async deleteVisit(id: string): Promise<boolean> {
+    const { error, count } = await this.db
+      .from("visits")
+      .delete({ count: "exact" })
+      .eq("id", id);
+    if (error) throw error;
+    return (count ?? 0) > 0;
   }
 
   async findByExitToken(token: string): Promise<Visit | null> {

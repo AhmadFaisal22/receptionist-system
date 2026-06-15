@@ -7,5 +7,8 @@ export default async function DashboardPage() {
   if (!session) redirect("/login?next=/dashboard");
   // Receptionist sees the paper log-book layout; admin keeps the modern view.
   const variant = session.role === "receptionist" ? "logbook" : "modern";
-  return <DashboardClient user={session.user} role={session.role} variant={variant} />;
+  // Edit/delete is for office staff (receptionist + admin); guards never get it.
+  return (
+    <DashboardClient user={session.user} role={session.role} variant={variant} canEdit />
+  );
 }

@@ -36,6 +36,23 @@ export const CheckoutSchema = z.union([
   }),
 ]);
 
+// Fields a receptionist may correct after a visit was submitted. Times, photo,
+// signature, status and the visit code are intentionally not editable here.
+export const VisitUpdateSchema = z
+  .object({
+    name: z.string().trim().min(2).max(80),
+    institution: z.string().trim().min(2).max(120),
+    phone: z
+      .string()
+      .trim()
+      .regex(/^\+?[0-9][0-9 ()\-.]{6,19}$/, "invalid phone number"),
+    purpose: z.string().trim().min(2).max(120),
+    hostName: z.string().trim().min(2).max(80),
+    hostDepartment: z.string().trim().max(80),
+  })
+  .partial();
+export type VisitUpdateInput = z.infer<typeof VisitUpdateSchema>;
+
 export const EmployeeSchema = z.object({
   name: z.string().trim().min(2).max(80),
   department: z.string().trim().min(1).max(80),
