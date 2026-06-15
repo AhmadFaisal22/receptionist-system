@@ -30,6 +30,31 @@ const LOGBOOK_SUB: Record<Lang, string[]> = {
   en: ["No", "Name", "Date", "Clock in", "Clock out", "Purpose", "Contact", "SEG host", "Notes/Items"],
   zh: LOGBOOK_ZH,
 };
+// Per-column width + alignment for the log-book table (table-fixed). The widths
+// act as ratios on desktop and as real widths under the min-width on mobile,
+// so columns stay even instead of cramming together.
+const LOGBOOK_COLW = [
+  "w-[44px]",
+  "w-[200px]",
+  "w-[110px]",
+  "w-[96px]",
+  "w-[96px]",
+  "w-[150px]",
+  "w-[140px]",
+  "w-[190px]",
+  "w-[150px]",
+];
+const LOGBOOK_ALIGN = [
+  "text-center",
+  "text-left",
+  "text-center whitespace-nowrap",
+  "text-center whitespace-nowrap",
+  "text-center whitespace-nowrap",
+  "text-left",
+  "text-left",
+  "text-left",
+  "text-left",
+];
 
 function StatusPill({ visit, t }: { visit: PublicVisit; t: StaffMessages }) {
   if (visit.status === "pending") {
@@ -254,7 +279,7 @@ export default function DashboardClient({
     window.location.replace("/login");
   }
 
-  const td = "border border-slate-300 px-2 py-1.5 align-top";
+  const td = "border border-slate-300 px-3 py-2 align-top";
 
   return (
     <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
@@ -360,18 +385,23 @@ export default function DashboardClient({
       </section>
 
       {variant === "logbook" ? (
-        <section className="mt-4 bg-white border border-slate-300 overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
+        <section className="mt-4 bg-white border border-slate-300 rounded-xl overflow-x-auto">
+          <table className="w-full min-w-[1000px] text-sm border-collapse table-fixed">
+            <colgroup>
+              {LOGBOOK_COLW.map((w, i) => (
+                <col key={i} className={w} />
+              ))}
+            </colgroup>
             <thead>
               <tr>
                 {LOGBOOK_ZH.map((zh, i) => (
                   <th
                     key={i}
-                    className="border border-slate-300 px-2 py-2 text-left bg-slate-100 align-bottom"
+                    className={`border border-slate-300 px-3 py-2.5 bg-slate-100 align-bottom ${LOGBOOK_ALIGN[i]}`}
                   >
-                    <div className="text-[13px] font-medium text-slate-700">{zh}</div>
+                    <div className="text-[13px] font-medium text-slate-700 leading-tight">{zh}</div>
                     {lang !== "zh" && (
-                      <div className="text-[10px] text-slate-400 font-normal">
+                      <div className="text-[10px] text-slate-400 font-normal leading-tight mt-0.5">
                         {LOGBOOK_SUB[lang][i]}
                       </div>
                     )}
@@ -394,21 +424,21 @@ export default function DashboardClient({
                   onClick={() => setSelected(v)}
                   className="cursor-pointer hover:bg-slate-50"
                 >
-                  <td className={td}>{i + 1}</td>
-                  <td className={td}>
-                    <p className="font-medium">{v.name}</p>
-                    <p className="text-xs text-slate-500">{v.institution}</p>
+                  <td className={`${td} ${LOGBOOK_ALIGN[0]}`}>{i + 1}</td>
+                  <td className={`${td} ${LOGBOOK_ALIGN[1]}`}>
+                    <p className="font-medium break-words">{v.name}</p>
+                    <p className="text-xs text-slate-500 break-words">{v.institution}</p>
                   </td>
-                  <td className={td}>{fmtDate(v.submittedAt)}</td>
-                  <td className={td}>{fmtTime(v.checkinAt)}</td>
-                  <td className={td}>{fmtTime(v.checkoutAt)}</td>
-                  <td className={td}>{purposeLabel(v.purpose)}</td>
-                  <td className={td}>{v.phone}</td>
-                  <td className={td}>
+                  <td className={`${td} ${LOGBOOK_ALIGN[2]}`}>{fmtDate(v.submittedAt)}</td>
+                  <td className={`${td} ${LOGBOOK_ALIGN[3]}`}>{fmtTime(v.checkinAt)}</td>
+                  <td className={`${td} ${LOGBOOK_ALIGN[4]}`}>{fmtTime(v.checkoutAt)}</td>
+                  <td className={`${td} ${LOGBOOK_ALIGN[5]} break-words`}>{purposeLabel(v.purpose)}</td>
+                  <td className={`${td} ${LOGBOOK_ALIGN[6]} break-words`}>{v.phone}</td>
+                  <td className={`${td} ${LOGBOOK_ALIGN[7]} break-words`}>
                     {hostLabel(v.hostName)}
                     {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
                   </td>
-                  <td className={`${td} text-slate-300`}>—</td>
+                  <td className={`${td} ${LOGBOOK_ALIGN[8]} text-slate-300`}>—</td>
                 </tr>
               ))}
             </tbody>
