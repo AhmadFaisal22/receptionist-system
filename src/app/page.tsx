@@ -40,7 +40,10 @@ export default function Home() {
   return (
     <main className="flex-1 flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-4">
-        <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="mb-2">
+          <div className="mb-3 flex justify-end">
+            <LangToggle lang={lang} setLang={setLang} />
+          </div>
           <div className="flex items-center gap-3">
             <Logo className="h-11 w-auto shrink-0" />
             <div>
@@ -50,7 +53,6 @@ export default function Home() {
               <p className="text-sm text-slate-500">{t.homeSubtitle}</p>
             </div>
           </div>
-          <LangToggle lang={lang} setLang={setLang} />
         </div>
         {links.map((l) => (
           <Link
