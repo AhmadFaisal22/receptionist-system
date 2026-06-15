@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import SignatureField from "@/components/SignatureField";
 import BackToMenu from "@/components/BackToMenu";
 import Logo from "@/components/Logo";
-import { dict, LANGS, PURPOSES, type Lang, type Purpose } from "@/lib/i18n";
+import { dict, LANGS, PURPOSES, type Purpose } from "@/lib/i18n";
+import { useLang } from "@/lib/useLang";
 
 interface EmployeeOption {
   id: string;
@@ -39,7 +40,7 @@ async function downscalePhoto(file: File, maxDim = 800, quality = 0.8): Promise<
 }
 
 export default function CheckinPage() {
-  const [lang, setLang] = useState<Lang>("id");
+  const [lang, setLang] = useLang();
   const t = dict[lang];
 
   const [step, setStep] = useState(1);
@@ -80,6 +81,58 @@ export default function CheckinPage() {
     (purpose !== "other" || purposeOther.trim().length >= 2) &&
     (host !== null || hostQuery.trim().length >= 2);
   const step3Valid = signature !== null;
+  const [checkingHost, setCheckingHost] = useState(false);
+
+  // The host must be a real employee. If the visitor typed a name without
+  // picking a suggestion, confirm it exists (and auto-select it) before
+  // advancing; otherwise surface "person to meet does not exist".
+  async function validateHost(): Promise<boolean> {
+    if (host) return true;
+    const q = hostQuery.trim();
+    if (q.length < 2) return false;
+    try {
+      const res = await fetch(`/api/employees?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const list = (await res.json()) as EmployeeOption[];
+        const exact = list.find((e) => e.name.toLowerCase() === q.toLowerCase());
+        if (exact) {
+          setHost(exact);
+          return true;
+        }
+      }
+    } catch {
+      // network issue — fall through to the not-found message
+    }
+    return false;
+  }
+
+  async function goNext() {
+    if (step === 1) {
+      if (!step1Valid) {
+        setError(t.requiredErr);
+        return;
+      }
+      setError("");
+      setStep(2);
+      return;
+    }
+    // step 2 — validate purpose/host before moving on
+    if (!step2Valid) {
+      setError(t.requiredErr);
+      return;
+    }
+    setCheckingHost(true);
+    try {
+      if (!(await validateHost())) {
+        setError(t.hostNotFound);
+        return;
+      }
+    } finally {
+      setCheckingHost(false);
+    }
+    setError("");
+    setStep(3);
+  }
 
   async function handlePhoto(file: File | undefined) {
     if (!file) return;
@@ -111,7 +164,15 @@ export default function CheckinPage() {
           lang,
         }),
       });
-      if (!res.ok) throw new Error(String(res.status));
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        if (body?.error === "host_not_found") {
+          setError(t.hostNotFound);
+          setStep(2);
+          return;
+        }
+        throw new Error(String(res.status));
+      }
       const data = (await res.json()) as SubmitResult;
       try {
         localStorage.setItem(
@@ -361,16 +422,9 @@ export default function CheckinPage() {
           {step < 3 ? (
             <button
               type="button"
-              onClick={() => {
-                const valid = step === 1 ? step1Valid : step2Valid;
-                if (!valid) {
-                  setError(t.requiredErr);
-                  return;
-                }
-                setError("");
-                setStep(step + 1);
-              }}
-              className="flex-1 rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm font-medium"
+              disabled={checkingHost}
+              onClick={goNext}
+              className="flex-1 rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm font-medium disabled:opacity-50"
             >
               {t.next}
             </button>

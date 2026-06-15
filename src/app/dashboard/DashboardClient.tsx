@@ -95,6 +95,8 @@ export default function DashboardClient({
   const t = staffDict[lang];
   const purposeLabel = (p: string) =>
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
+  // Address the host politely (Mr/Ms · Bapak/Ibu · 先生/女士).
+  const hostLabel = (name: string) => `${t.hostHonorific} ${name}`;
   const logoKey = logoSrc.includes("SIGAP") ? "sigap" : "seg";
 
   const [visits, setVisits] = useState<PublicVisit[]>([]);
@@ -403,7 +405,7 @@ export default function DashboardClient({
                   <td className={td}>{purposeLabel(v.purpose)}</td>
                   <td className={td}>{v.phone}</td>
                   <td className={td}>
-                    {v.hostName}
+                    {hostLabel(v.hostName)}
                     {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
                   </td>
                   <td className={`${td} text-slate-300`}>—</td>
@@ -449,7 +451,7 @@ export default function DashboardClient({
                   </td>
                   <td className="px-2 py-2.5 text-slate-600">{purposeLabel(v.purpose)}</td>
                   <td className="px-2 py-2.5">
-                    <p>{v.hostName}</p>
+                    <p>{hostLabel(v.hostName)}</p>
                     {v.hostDepartment && (
                       <p className="text-xs text-slate-500">{v.hostDepartment}</p>
                     )}
@@ -556,7 +558,8 @@ export default function DashboardClient({
                       {purposeLabel(selected.purpose)}
                     </p>
                     <p>
-                      <span className="text-slate-500">{t.colHost}:</span> {selected.hostName}
+                      <span className="text-slate-500">{t.colHost}:</span>{" "}
+                      {hostLabel(selected.hostName)}
                       {selected.hostDepartment ? ` — ${selected.hostDepartment}` : ""}
                     </p>
                     <p>

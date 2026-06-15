@@ -70,6 +70,16 @@ const id = {
     "Kunjungan tidak ditemukan di perangkat ini. Masukkan nomor kunjungan dan nomor telepon Anda.",
   visitCode: "Nomor kunjungan",
   notFoundErr: "Kunjungan tidak ditemukan. Periksa kembali data Anda.",
+  hostNotFound: "Orang yang ditemui tidak ditemukan. Pilih nama dari daftar saran.",
+  homeSubtitle: "Sistem manajemen tamu",
+  menuCheckin: "Check-in tamu",
+  menuCheckinDesc: "Buku tamu digital — formulir untuk tamu di pos",
+  menuCheckout: "Check-out tamu",
+  menuCheckoutDesc: "Target QR keluar — satu ketuk untuk keluar",
+  menuStaff: "Masuk staf",
+  menuStaffDesc: "Dasbor resepsionis, tampilan satpam, admin",
+  menuQr: "Poster QR",
+  menuQrDesc: "Cetak poster CHECK IN / CHECK OUT untuk pos keamanan",
 };
 
 export type Messages = typeof id;
@@ -128,6 +138,16 @@ const en: Messages = {
     "No visit found on this device. Enter your visit number and phone number.",
   visitCode: "Visit number",
   notFoundErr: "Visit not found. Please check your details.",
+  hostNotFound: "Your Person to meet does not exist. Please pick a name from the suggestions.",
+  homeSubtitle: "Visitor management system",
+  menuCheckin: "Visitor check-in",
+  menuCheckinDesc: "Digital visitor log — form for visitors at the gate",
+  menuCheckout: "Visitor check-out",
+  menuCheckoutDesc: "Exit QR target — one-tap clock out",
+  menuStaff: "Staff login",
+  menuStaffDesc: "Receptionist dashboard, guard view, admin",
+  menuQr: "QR posters",
+  menuQrDesc: "Print the CHECK IN / CHECK OUT posters for the security post",
 };
 
 const zh: Messages = {
@@ -183,6 +203,16 @@ const zh: Messages = {
   findVisit: "未在此设备上找到访问记录。请输入您的访客编号和电话号码。",
   visitCode: "访客编号",
   notFoundErr: "未找到访问记录，请核对您的信息。",
+  hostNotFound: "未找到您要拜访的对象，请从建议列表中选择。",
+  homeSubtitle: "访客管理系统",
+  menuCheckin: "访客登记进入",
+  menuCheckinDesc: "访客电子登记 — 岗亭访客填写表单",
+  menuCheckout: "访客离场登记",
+  menuCheckoutDesc: "离场二维码 — 一键登记离开",
+  menuStaff: "员工登录",
+  menuStaffDesc: "前台仪表板、保安视图、管理员",
+  menuQr: "二维码海报",
+  menuQrDesc: "打印岗亭用 CHECK IN / CHECK OUT 海报",
 };
 
 export const dict: Record<Lang, Messages> = { id, en, zh };
@@ -229,6 +259,7 @@ const staffId = {
     "Belum ada tamu untuk tanggal ini — entri muncul otomatis saat tamu check in di pos.",
   autoUpdate: "Pembaruan muncul otomatis setiap beberapa detik — tanpa refresh.",
   phoneLabel: "Telepon",
+  hostHonorific: "Bapak/Ibu",
   signatureLabel: "Tanda tangan",
   confirmArrival: "Konfirmasi masuk",
   clockOut: "Catat keluar",
@@ -323,6 +354,7 @@ const staffEn: StaffMessages = {
     "No visitors for this date yet — entries appear here the moment someone checks in at the gate.",
   autoUpdate: "Updates appear automatically every few seconds — no refresh needed.",
   phoneLabel: "Phone",
+  hostHonorific: "Mr/Ms",
   signatureLabel: "Signature",
   confirmArrival: "Confirm arrival",
   clockOut: "Clock out",
@@ -414,6 +446,7 @@ const staffZh: StaffMessages = {
   emptyToday: "该日期暂无访客 — 有人在岗亭登记后会立即显示。",
   autoUpdate: "每隔几秒自动更新 — 无需刷新。",
   phoneLabel: "电话",
+  hostHonorific: "先生/女士",
   signatureLabel: "签名",
   confirmArrival: "确认进入",
   clockOut: "登记离开",

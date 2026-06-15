@@ -24,6 +24,7 @@ export default async function PrintPage({
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
   const statusLabel = (s: string) =>
     s === "pending" ? t.stPending : s === "checked_in" ? t.stInside : t.stOut;
+  const hostLabel = (name: string) => `${t.hostHonorific} ${name}`;
   const store = getStore();
   const visits = (all ? await store.listAllVisits() : await store.listVisits(date)).map(toPublic);
   const subtitle = all ? t.viewAll : date;
@@ -78,7 +79,7 @@ export default async function PrintPage({
                 </td>
                 <td className={cell}>{purposeLabel(v.purpose)}</td>
                 <td className={cell}>
-                  {v.hostName}
+                  {hostLabel(v.hostName)}
                   {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
                 </td>
                 <td className={cell}>{fmtTime(v.checkinAt)}</td>
@@ -133,7 +134,7 @@ export default async function PrintPage({
                 <td className={cell}>{purposeLabel(v.purpose)}</td>
                 <td className={cell}>{v.phone}</td>
                 <td className={cell}>
-                  {v.hostName}
+                  {hostLabel(v.hostName)}
                   {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
                 </td>
                 <td className={cell}></td>

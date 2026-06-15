@@ -35,6 +35,7 @@ export async function GET(req: Request) {
     (dict[lang].purposes as Record<string, string>)[p] ?? p;
   const statusLabel = (s: string) =>
     s === "pending" ? t.stPending : s === "checked_in" ? t.stInside : t.stOut;
+  const hostLabel = (name: string) => `${t.hostHonorific} ${name}`;
   const store = getStore();
   const visits = all ? await store.listAllVisits() : await store.listVisits(date);
   const subtitle = all ? t.viewAll : date;
@@ -97,7 +98,9 @@ export async function GET(req: Request) {
         idx + 1,
         v.institution ? `${v.name}\n${v.institution}` : v.name,
         purposeLabel(v.purpose),
-        v.hostDepartment ? `${v.hostName} (${v.hostDepartment})` : v.hostName,
+        v.hostDepartment
+          ? `${hostLabel(v.hostName)} (${v.hostDepartment})`
+          : hostLabel(v.hostName),
         fmtTime(v.checkinAt),
         v.checkoutMethod === "auto" ? `${fmtTime(v.checkoutAt)} (auto)` : fmtTime(v.checkoutAt),
         statusLabel(v.status),
@@ -147,7 +150,9 @@ export async function GET(req: Request) {
         v.checkoutMethod === "auto" ? `${fmtTime(v.checkoutAt)} (auto)` : fmtTime(v.checkoutAt),
         purposeLabel(v.purpose),
         v.phone,
-        v.hostDepartment ? `${v.hostName} (${v.hostDepartment})` : v.hostName,
+        v.hostDepartment
+          ? `${hostLabel(v.hostName)} (${v.hostDepartment})`
+          : hostLabel(v.hostName),
         "",
       ];
       values.forEach((val, i) => {
