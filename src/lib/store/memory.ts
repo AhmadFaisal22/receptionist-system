@@ -68,6 +68,7 @@ export class MemoryStore implements Store {
       hostDepartment: input.hostDepartment ?? "",
       photoDataUrl: input.photoDataUrl ?? null,
       signatureDataUrl: input.signatureDataUrl,
+      notes: "",
       lang: input.lang,
       submittedAt: new Date().toISOString(),
       checkinAt: null,

@@ -137,7 +137,7 @@ export default async function PrintPage({
                   {hostLabel(v.hostName)}
                   {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
                 </td>
-                <td className={cell}></td>
+                <td className={cell}>{v.notes}</td>
               </tr>
             ))}
           </tbody>

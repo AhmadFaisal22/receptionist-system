@@ -22,6 +22,7 @@ interface VisitRow {
   host_department: string;
   photo_data: string | null;
   signature_data: string;
+  notes: string | null;
   lang: string;
   exit_token: string;
   submitted_at: string;
@@ -51,6 +52,7 @@ function mapVisit(r: VisitRow): Visit {
     hostDepartment: r.host_department,
     photoDataUrl: r.photo_data,
     signatureDataUrl: r.signature_data,
+    notes: r.notes ?? "",
     lang: r.lang as Lang,
     submittedAt: r.submitted_at,
     checkinAt: r.checkin_at,
@@ -157,6 +159,7 @@ export class SupabaseStore implements Store {
     if (patch.purpose !== undefined) row.purpose = patch.purpose;
     if (patch.hostName !== undefined) row.host_name = patch.hostName;
     if (patch.hostDepartment !== undefined) row.host_department = patch.hostDepartment;
+    if (patch.notes !== undefined) row.notes = patch.notes;
     if (Object.keys(row).length === 0) return this.getVisit(id);
     const { data, error } = await this.db
       .from("visits")

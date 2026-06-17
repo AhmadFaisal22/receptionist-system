@@ -153,7 +153,7 @@ export async function GET(req: Request) {
         v.hostDepartment
           ? `${hostLabel(v.hostName)} (${v.hostDepartment})`
           : hostLabel(v.hostName),
-        "",
+        v.notes,
       ];
       values.forEach((val, i) => {
         const c = row.getCell(i + 1);

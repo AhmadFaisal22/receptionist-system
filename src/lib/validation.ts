@@ -49,6 +49,7 @@ export const VisitUpdateSchema = z
     purpose: z.string().trim().min(2).max(120),
     hostName: z.string().trim().min(2).max(80),
     hostDepartment: z.string().trim().max(80),
+    notes: z.string().trim().max(500),
   })
   .partial();
 export type VisitUpdateInput = z.infer<typeof VisitUpdateSchema>;

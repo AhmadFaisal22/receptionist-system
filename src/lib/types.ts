@@ -23,6 +23,8 @@ export interface Visit {
   hostDepartment: string;
   photoDataUrl: string | null;
   signatureDataUrl: string;
+  /** Receptionist note — items brought in/out, remarks. Empty by default. */
+  notes: string;
   lang: Lang;
   submittedAt: string;
   checkinAt: string | null;

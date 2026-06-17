@@ -41,6 +41,8 @@ create table if not exists visits (
   -- Migrate to Storage buckets + signed URLs if volume ever makes this heavy.
   photo_data text check (photo_data is null or photo_data like 'data:image/%'),
   signature_data text not null check (signature_data like 'data:image/png;base64,%'),
+  -- Receptionist note (items in/out, remarks); editable from the dashboard.
+  notes text not null default '' check (char_length(notes) <= 500),
   lang text not null default 'id' check (lang in ('id', 'en', 'zh')),
   -- Secret held only by the visitor's device; authorizes self check-out.
   exit_token uuid not null default gen_random_uuid(),

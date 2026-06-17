@@ -34,7 +34,7 @@ const LOGBOOK_SUB: Record<Lang, string[]> = {
 // act as ratios on desktop and as real widths under the min-width on mobile,
 // so columns stay even instead of cramming together.
 const LOGBOOK_COLW = [
-  "w-[44px]",
+  "w-[56px]",
   "w-[200px]",
   "w-[110px]",
   "w-[96px]",
@@ -137,6 +137,7 @@ export default function DashboardClient({
     purpose: "",
     hostName: "",
     hostDepartment: "",
+    notes: "",
   });
   const [busy, setBusy] = useState(false);
   const [editError, setEditError] = useState("");
@@ -230,6 +231,7 @@ export default function DashboardClient({
       purpose: v.purpose,
       hostName: v.hostName,
       hostDepartment: v.hostDepartment ?? "",
+      notes: v.notes ?? "",
     });
     setEditError("");
     setEditing(true);
@@ -397,9 +399,11 @@ export default function DashboardClient({
                 {LOGBOOK_ZH.map((zh, i) => (
                   <th
                     key={i}
-                    className={`border border-slate-300 px-3 py-2.5 bg-slate-100 align-bottom ${LOGBOOK_ALIGN[i]}`}
+                    className="border border-slate-300 px-2 py-2.5 bg-slate-100 text-center align-middle"
                   >
-                    <div className="text-[13px] font-medium text-slate-700 leading-tight">{zh}</div>
+                    <div className="text-[13px] font-semibold text-slate-700 leading-tight whitespace-nowrap">
+                      {zh}
+                    </div>
                     {lang !== "zh" && (
                       <div className="text-[10px] text-slate-400 font-normal leading-tight mt-0.5">
                         {LOGBOOK_SUB[lang][i]}
@@ -438,7 +442,13 @@ export default function DashboardClient({
                     {hostLabel(v.hostName)}
                     {v.hostDepartment ? ` (${v.hostDepartment})` : ""}
                   </td>
-                  <td className={`${td} ${LOGBOOK_ALIGN[8]} text-slate-300`}>—</td>
+                  <td
+                    className={`${td} ${LOGBOOK_ALIGN[8]} break-words ${
+                      v.notes ? "" : "text-slate-300"
+                    }`}
+                  >
+                    {v.notes || "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -448,15 +458,15 @@ export default function DashboardClient({
         <section className="mt-4 rounded-2xl bg-white border border-slate-200 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
-                <th className="px-4 py-3 font-medium">{t.colNo}</th>
-                <th className="px-2 py-3 font-medium">{t.colVisitor}</th>
-                <th className="px-2 py-3 font-medium">{t.colPurpose}</th>
-                <th className="px-2 py-3 font-medium">{t.colHost}</th>
-                <th className="px-2 py-3 font-medium">{t.colIn}</th>
-                <th className="px-2 py-3 font-medium">{t.colOut}</th>
-                <th className="px-2 py-3 font-medium">{t.colStatus}</th>
-                <th className="px-2 py-3 font-medium">{t.colSign}</th>
+              <tr className="text-[11px] uppercase tracking-wide text-slate-500 bg-slate-50 border-b border-slate-200">
+                <th className="px-3 py-3 font-semibold text-center">{t.colNo}</th>
+                <th className="px-3 py-3 font-semibold text-left">{t.colVisitor}</th>
+                <th className="px-3 py-3 font-semibold text-left">{t.colPurpose}</th>
+                <th className="px-3 py-3 font-semibold text-left">{t.colHost}</th>
+                <th className="px-3 py-3 font-semibold text-center">{t.colIn}</th>
+                <th className="px-3 py-3 font-semibold text-center">{t.colOut}</th>
+                <th className="px-3 py-3 font-semibold text-center">{t.colStatus}</th>
+                <th className="px-3 py-3 font-semibold text-center">{t.colSign}</th>
               </tr>
             </thead>
             <tbody ref={tbodyRef}>
@@ -474,26 +484,26 @@ export default function DashboardClient({
                   onClick={() => setSelected(v)}
                   className="border-b border-slate-100 last:border-0 cursor-pointer hover:bg-slate-50"
                 >
-                  <td className="px-4 py-2.5">{i + 1}</td>
-                  <td className="px-2 py-2.5">
+                  <td className="px-3 py-2.5 text-center">{i + 1}</td>
+                  <td className="px-3 py-2.5">
                     <p className="font-medium">{v.name}</p>
                     <p className="text-xs text-slate-500">{v.institution}</p>
                   </td>
-                  <td className="px-2 py-2.5 text-slate-600">{purposeLabel(v.purpose)}</td>
-                  <td className="px-2 py-2.5">
+                  <td className="px-3 py-2.5 text-slate-600">{purposeLabel(v.purpose)}</td>
+                  <td className="px-3 py-2.5">
                     <p>{hostLabel(v.hostName)}</p>
                     {v.hostDepartment && (
                       <p className="text-xs text-slate-500">{v.hostDepartment}</p>
                     )}
                   </td>
-                  <td className="px-2 py-2.5">{fmtTime(v.checkinAt)}</td>
-                  <td className="px-2 py-2.5">{fmtTime(v.checkoutAt)}</td>
-                  <td className="px-2 py-2.5">
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">{fmtTime(v.checkinAt)}</td>
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">{fmtTime(v.checkoutAt)}</td>
+                  <td className="px-3 py-2.5 text-center">
                     <StatusPill visit={v} t={t} />
                   </td>
-                  <td className="px-2 py-2.5">
+                  <td className="px-3 py-2.5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={v.signatureDataUrl} alt="signature" className="h-6 max-w-16 object-contain" />
+                    <img src={v.signatureDataUrl} alt="signature" className="h-6 max-w-16 object-contain mx-auto" />
                   </td>
                 </tr>
               ))}
@@ -546,6 +556,17 @@ export default function DashboardClient({
                     />
                   </div>
                 ))}
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">{t.notesLabel}</label>
+                  <textarea
+                    value={form.notes}
+                    onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                    rows={4}
+                    maxLength={500}
+                    placeholder={t.notesLabel}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-slate-500 resize-y min-h-[88px]"
+                  />
+                </div>
                 {editError && <p className="text-red-600 text-xs">{editError}</p>}
                 <div className="flex gap-2 pt-1">
                   <button
