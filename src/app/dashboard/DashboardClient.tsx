@@ -9,6 +9,7 @@ import type { PublicVisit } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
 import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
+import TrafficCard from "@/components/TrafficCard";
 
 type Variant = "modern" | "logbook";
 
@@ -97,6 +98,38 @@ function AnimatedNumber({ value }: { value: number }) {
   }, [value]);
   return <span ref={ref}>{value}</span>;
 }
+
+const iconCls = "w-5 h-5";
+const ICONS = {
+  users: (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  door: (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 4h3a2 2 0 0 1 2 2v14" />
+      <path d="M2 20h3M13 20h9" />
+      <path d="M10 12v.01" />
+      <path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z" />
+    </svg>
+  ),
+  clock: (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  ),
+  check: (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  ),
+} as const;
 
 export default function DashboardClient({
   user,
@@ -323,25 +356,53 @@ export default function DashboardClient({
         </div>
       </header>
 
-      {variant === "modern" && (
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
-          {(
-            [
-              [t.statToday, stats.total],
-              [t.statInside, stats.inside],
-              [t.statPending, stats.pending],
-              [t.statCheckedOut, stats.out],
-            ] as const
-          ).map(([label, value]) => (
-            <div key={label} className="rounded-2xl bg-white border border-slate-200 p-4">
-              <p className="text-xs text-slate-500">{label}</p>
-              <p className="text-2xl font-semibold mt-1">
-                <AnimatedNumber value={value} />
-              </p>
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+        {(
+          [
+            {
+              label: t.statToday,
+              value: stats.total,
+              sub: showAll ? t.viewAll : t.statTodayHint,
+              icon: ICONS.users,
+              color: "text-red-500 bg-red-50",
+            },
+            {
+              label: t.statInside,
+              value: stats.inside,
+              sub: t.statActiveNow,
+              icon: ICONS.door,
+              color: "text-green-600 bg-green-50",
+            },
+            {
+              label: t.statPending,
+              value: stats.pending,
+              sub: t.statAtGate,
+              icon: ICONS.clock,
+              color: "text-amber-600 bg-amber-50",
+            },
+            {
+              label: t.statCheckedOut,
+              value: stats.out,
+              sub: `${stats.total ? Math.round((stats.out / stats.total) * 100) : 0}% ${t.statDone}`,
+              icon: ICONS.check,
+              color: "text-slate-600 bg-slate-100",
+            },
+          ] as const
+        ).map((c) => (
+          <div key={c.label} className="rounded-2xl bg-white border border-slate-200 p-4">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs text-slate-500">{c.label}</p>
+              <span className={`rounded-lg p-1.5 ${c.color}`}>{c.icon}</span>
             </div>
-          ))}
-        </section>
-      )}
+            <p className="text-3xl font-bold mt-1 leading-none">
+              <AnimatedNumber value={c.value} />
+            </p>
+            <p className="text-[11px] text-slate-400 mt-2">↗ {c.sub}</p>
+          </div>
+        ))}
+      </section>
+
+      <TrafficCard lang={lang} />
 
       <section className="flex items-center gap-2 mt-5 flex-wrap">
         <input
