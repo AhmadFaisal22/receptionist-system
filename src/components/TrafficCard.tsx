@@ -150,7 +150,7 @@ export default function TrafficCard({ lang }: { lang: Lang }) {
             <div key={b.key} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
               <span className="text-[11px] font-medium text-slate-600">{b.count}</span>
               <div
-                className="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-slate-300 to-slate-800 transition-all"
+                className="w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-red-300 to-red-600 transition-all"
                 style={{ height: `${Math.max(4, (b.count / max) * 100)}%` }}
                 title={`${b.count} ${t.analyticsVisitors}`}
               />
