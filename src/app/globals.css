@@ -16,10 +16,36 @@ body {
 }
 
 @media print {
+  /* Wide visitor tables fit A4 landscape without trimming columns. */
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
   .no-print {
     display: none !important;
   }
   body {
     background: #ffffff;
+  }
+  /* Let the table use the full page width instead of its on-screen min-width. */
+  #print-root .overflow-x-auto {
+    overflow: visible !important;
+  }
+  #print-root table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed;
+    font-size: 9px !important;
+  }
+  /* Headers + cells wrap (incl. Chinese) instead of being cut off. */
+  #print-root th,
+  #print-root td {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+  #print-root th {
+    text-align: center !important;
+    vertical-align: middle !important;
   }
 }

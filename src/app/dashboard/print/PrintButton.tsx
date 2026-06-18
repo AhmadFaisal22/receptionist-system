@@ -4,13 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface Props {
   fileBase: string;
-  docTitle: string;
-  docSubtitle: string;
-  generated: string;
-  head: string[];
-  body: string[][];
-  signatures: { row: number; url: string }[];
-  signCol: number;
+  captureId: string;
   saveLabel: string;
   printLabel: string;
   autoAction?: "save" | "print";
@@ -48,72 +42,54 @@ const DownloadIcon = (
   </svg>
 );
 
-export default function PrintButton(props: Props) {
+export default function PrintButton({
+  fileBase,
+  captureId,
+  saveLabel,
+  printLabel,
+  autoAction,
+}: Props) {
   const [saving, setSaving] = useState(false);
   const ran = useRef(false);
 
   async function handleSave() {
+    const el = document.getElementById(captureId);
+    if (!el) return;
     setSaving(true);
     try {
-      const [{ jsPDF }, autoTableMod] = await Promise.all([
+      // Render the actual HTML (Chinese headers + signatures included) to an
+      // image — jsPDF's built-in fonts can't draw CJK, so we rasterise instead.
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas-pro"),
         import("jspdf"),
-        import("jspdf-autotable"),
       ]);
-      const autoTable = autoTableMod.default;
-      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-      const margin = 32;
-
-      doc.setFontSize(13);
-      doc.setFont("helvetica", "bold");
-      doc.text(props.docTitle, margin, 36);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100);
-      doc.text(props.docSubtitle, margin, 52);
-      doc.setTextColor(0);
-
-      const sigMap = new Map(props.signatures.map((s) => [s.row, s.url]));
-
-      autoTable(doc, {
-        head: [props.head],
-        body: props.body,
-        startY: 64,
-        margin: { left: margin, right: margin },
-        styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak", valign: "middle" },
-        headStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: "bold" },
-        // Reserve room in the signature column for the embedded image.
-        columnStyles: props.signCol >= 0 ? { [props.signCol]: { minCellWidth: 70 } } : {},
-        didParseCell: (data) => {
-          // Keep the multi-line "name\ninstitution" cell readable.
-          if (data.section === "body" && data.column.index === 1) {
-            data.cell.styles.cellWidth = "wrap";
-          }
-        },
-        didDrawCell: (data) => {
-          if (
-            data.section === "body" &&
-            data.column.index === props.signCol &&
-            sigMap.has(data.row.index)
-          ) {
-            const url = sigMap.get(data.row.index)!;
-            try {
-              const pad = 2;
-              const w = data.cell.width - pad * 2;
-              const h = data.cell.height - pad * 2;
-              doc.addImage(url, "PNG", data.cell.x + pad, data.cell.y + pad, w, h, undefined, "FAST");
-            } catch {
-              // skip an unreadable signature
-            }
-          }
-        },
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
       });
+      const imgData = canvas.toDataURL("image/png");
 
-      const finalY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 64;
-      doc.setFontSize(8);
-      doc.setTextColor(120);
-      doc.text(props.generated, margin, finalY + 16);
+      // A4 landscape so the wide visitor table is never trimmed.
+      const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 24;
+      const imgW = pageW - margin * 2;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      const usableH = pageH - margin * 2;
 
-      doc.save(`${props.fileBase}.pdf`);
+      let heightLeft = imgH;
+      let position = margin;
+      pdf.addImage(imgData, "PNG", margin, position, imgW, imgH);
+      heightLeft -= usableH;
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = margin - (imgH - heightLeft);
+        pdf.addImage(imgData, "PNG", margin, position, imgW, imgH);
+        heightLeft -= usableH;
+      }
+      pdf.save(`${fileBase}.pdf`);
     } finally {
       setSaving(false);
     }
@@ -121,12 +97,12 @@ export default function PrintButton(props: Props) {
 
   // Auto-run the action the dashboard requested (Save or Print) on open.
   useEffect(() => {
-    if (ran.current || !props.autoAction) return;
+    if (ran.current || !autoAction) return;
     ran.current = true;
     const id = setTimeout(() => {
-      if (props.autoAction === "print") window.print();
-      else if (props.autoAction === "save") void handleSave();
-    }, 400);
+      if (autoAction === "print") window.print();
+      else if (autoAction === "save") void handleSave();
+    }, 500);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -139,14 +115,14 @@ export default function PrintButton(props: Props) {
         className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white text-slate-700 px-4 py-2 text-sm font-medium hover:border-slate-400 disabled:opacity-50"
       >
         {DownloadIcon}
-        {saving ? `${props.saveLabel}…` : props.saveLabel}
+        {saving ? `${saveLabel}…` : saveLabel}
       </button>
       <button
         onClick={() => window.print()}
         className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm font-medium"
       >
         {PrinterIcon}
-        {props.printLabel}
+        {printLabel}
       </button>
     </div>
   );
