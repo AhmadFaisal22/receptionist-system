@@ -162,6 +162,7 @@ export default function DashboardClient({
   const [showAll, setShowAll] = useState(false);
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<PublicVisit | null>(null);
+  const [pdfMenu, setPdfMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -274,13 +275,33 @@ export default function DashboardClient({
     setBusy(true);
     setEditError("");
     try {
+      // Send ONLY the fields the user actually changed. Editing the note then
+      // sends just { notes } and never re-validates unrelated fields (phone,
+      // host, …) — which was causing spurious validation failures.
+      const current = visit as unknown as Record<string, unknown>;
+      const patch: Record<string, string> = {};
+      (Object.keys(form) as (keyof typeof form)[]).forEach((k) => {
+        const next = form[k].trim();
+        const prev = String(current[k] ?? "");
+        if (next !== prev) patch[k] = next;
+      });
+      if (Object.keys(patch).length === 0) {
+        setEditing(false);
+        return;
+      }
       const res = await fetch(`/api/visits/${visit.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(patch),
       });
       if (!res.ok) {
-        setEditError(t.addError);
+        const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
+        const detail = Array.isArray(body?.error)
+          ? body.error.join(", ")
+          : typeof body?.error === "string"
+            ? body.error
+            : "";
+        setEditError(detail ? `${t.saveError} (${detail})` : t.saveError);
         return;
       }
       const updated = (await res.json()) as PublicVisit;
@@ -436,15 +457,57 @@ export default function DashboardClient({
           <img src="/excel.svg" alt="" className="h-4 w-4" />
           {t.excel}
         </a>
-        <a
-          href={`/dashboard/print?${exportQs}`}
-          target="_blank"
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/pdf.svg" alt="" className="h-4 w-4" />
-          {t.pdf}
-        </a>
+        <div className="relative">
+          <button
+            onClick={() => setPdfMenu((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/pdf.svg" alt="" className="h-4 w-4" />
+            {t.pdf}
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          {pdfMenu && (
+            <>
+              {/* click-away backdrop */}
+              <button
+                className="fixed inset-0 z-10 cursor-default"
+                aria-label="close"
+                onClick={() => setPdfMenu(false)}
+              />
+              <div className="absolute right-0 mt-1 z-20 w-44 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+                <a
+                  href={`/dashboard/print?${exportQs}&action=save`}
+                  target="_blank"
+                  onClick={() => setPdfMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="m7 10 5 5 5-5" />
+                    <path d="M12 15V3" />
+                  </svg>
+                  {t.savePdf}
+                </a>
+                <a
+                  href={`/dashboard/print?${exportQs}&action=print`}
+                  target="_blank"
+                  onClick={() => setPdfMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 border-t border-slate-100"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 9V2h12v7" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="8" rx="1" />
+                  </svg>
+                  {t.printPdf}
+                </a>
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
       {variant === "logbook" ? (
