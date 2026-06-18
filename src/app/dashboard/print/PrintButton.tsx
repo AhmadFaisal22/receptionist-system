@@ -56,6 +56,21 @@ export default function PrintButton({
     const el = document.getElementById(captureId);
     if (!el) return;
     setSaving(true);
+
+    // On mobile the table sits inside an overflow-x-auto wrapper that clips it
+    // to the viewport, so a naive capture only grabs the visible left columns.
+    // Temporarily expand the capture target to the table's full width so every
+    // column is rasterised, then restore the original styles.
+    const scroller = el.querySelector<HTMLElement>(".overflow-x-auto");
+    const table = el.querySelector("table");
+    const prev = {
+      width: el.style.width,
+      maxWidth: el.style.maxWidth,
+      overflow: scroller?.style.overflow ?? "",
+    };
+    const targetW = Math.ceil(
+      Math.max(el.scrollWidth, table?.scrollWidth ?? 0, table?.offsetWidth ?? 0, 800),
+    );
     try {
       // Render the actual HTML (Chinese headers + signatures included) to an
       // image — jsPDF's built-in fonts can't draw CJK, so we rasterise instead.
@@ -63,11 +78,19 @@ export default function PrintButton({
         import("html2canvas-pro"),
         import("jspdf"),
       ]);
+
+      if (scroller) scroller.style.overflow = "visible";
+      el.style.width = `${targetW}px`;
+      el.style.maxWidth = "none";
+
       const canvas = await html2canvas(el, {
         scale: 2,
         backgroundColor: "#ffffff",
         useCORS: true,
+        width: targetW,
+        windowWidth: targetW,
       });
+
       const imgData = canvas.toDataURL("image/png");
 
       // A4 landscape so the wide visitor table is never trimmed.
@@ -91,6 +114,10 @@ export default function PrintButton({
       }
       pdf.save(`${fileBase}.pdf`);
     } finally {
+      // Always restore the on-screen layout, even if capture failed.
+      el.style.width = prev.width;
+      el.style.maxWidth = prev.maxWidth;
+      if (scroller) scroller.style.overflow = prev.overflow;
       setSaving(false);
     }
   }
