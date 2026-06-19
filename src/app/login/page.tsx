@@ -126,7 +126,6 @@ function LoginForm() {
         <select className={inputCls} value={username} onChange={(e) => setUsername(e.target.value)}>
           <option value="reception">{t.roleReceptionist}</option>
           <option value="guard">{t.roleGuard}</option>
-          <option value="admin">{t.roleAdmin}</option>
         </select>
 
         <label className="block text-sm text-slate-600 mb-1 mt-3">{t.password}</label>
