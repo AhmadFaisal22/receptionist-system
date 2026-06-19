@@ -5,7 +5,7 @@ import SignatureField from "@/components/SignatureField";
 import BackToMenu from "@/components/BackToMenu";
 import Logo from "@/components/Logo";
 import { dict, LANGS, PURPOSES, type Purpose } from "@/lib/i18n";
-import { LOCATIONS } from "@/lib/config";
+import { LOCATIONS, locationLabel } from "@/lib/config";
 import { useLang } from "@/lib/useLang";
 
 interface EmployeeOption {
@@ -224,7 +224,7 @@ export default function CheckinPage() {
             {destination && (
               <div className="flex justify-between">
                 <span className="text-slate-500">{t.destination}</span>
-                <span className="text-right">{destination}</span>
+                <span className="text-right">{locationLabel(destination, lang)}</span>
               </div>
             )}
             <div className="flex justify-between">
@@ -385,8 +385,8 @@ export default function CheckinPage() {
             >
               <option value="">{t.destinationNone}</option>
               {LOCATIONS.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
+                <option key={loc.id} value={loc.id}>
+                  {locationLabel(loc.id, lang)}
                 </option>
               ))}
             </select>

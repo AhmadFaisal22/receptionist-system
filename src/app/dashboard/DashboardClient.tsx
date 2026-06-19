@@ -6,6 +6,7 @@ import { fmtDate, fmtTime, localDate } from "@/lib/dates";
 import { dict, staffDict, type Lang, type StaffMessages } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { PublicVisit } from "@/lib/types";
+import { LOCATIONS, locationLabel } from "@/lib/config";
 import BackToMenu from "@/components/BackToMenu";
 import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
@@ -671,7 +672,6 @@ export default function DashboardClient({
                     ["purpose", t.colPurpose],
                     ["hostName", t.colHost],
                     ["hostDepartment", t.department],
-                    ["destination", t.destinationLabel],
                   ] as const
                 ).map(([field, label]) => (
                   <div key={field}>
@@ -683,6 +683,26 @@ export default function DashboardClient({
                     />
                   </div>
                 ))}
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">{t.destinationLabel}</label>
+                  <select
+                    value={form.destination}
+                    onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 outline-none focus:border-slate-500"
+                  >
+                    <option value="">—</option>
+                    {/* keep a free/legacy value selectable even if not in the list */}
+                    {form.destination &&
+                      !LOCATIONS.some((l) => l.id === form.destination) && (
+                        <option value={form.destination}>{form.destination}</option>
+                      )}
+                    {LOCATIONS.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {locationLabel(loc.id, lang)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">{t.notesLabel}</label>
                   <textarea
@@ -743,7 +763,7 @@ export default function DashboardClient({
                     {selected.destination && (
                       <p>
                         <span className="text-slate-500">{t.destinationLabel}:</span>{" "}
-                        {selected.destination}
+                        {locationLabel(selected.destination, lang)}
                       </p>
                     )}
                     <p>
