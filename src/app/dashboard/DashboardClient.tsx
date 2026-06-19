@@ -171,6 +171,7 @@ export default function DashboardClient({
     purpose: "",
     hostName: "",
     hostDepartment: "",
+    destination: "",
     notes: "",
   });
   const [busy, setBusy] = useState(false);
@@ -265,6 +266,7 @@ export default function DashboardClient({
       purpose: v.purpose,
       hostName: v.hostName,
       hostDepartment: v.hostDepartment ?? "",
+      destination: v.destination ?? "",
       notes: v.notes ?? "",
     });
     setEditError("");
@@ -669,6 +671,7 @@ export default function DashboardClient({
                     ["purpose", t.colPurpose],
                     ["hostName", t.colHost],
                     ["hostDepartment", t.department],
+                    ["destination", t.destinationLabel],
                   ] as const
                 ).map(([field, label]) => (
                   <div key={field}>
@@ -737,6 +740,12 @@ export default function DashboardClient({
                       {hostLabel(selected.hostName)}
                       {selected.hostDepartment ? ` — ${selected.hostDepartment}` : ""}
                     </p>
+                    {selected.destination && (
+                      <p>
+                        <span className="text-slate-500">{t.destinationLabel}:</span>{" "}
+                        {selected.destination}
+                      </p>
+                    )}
                     <p>
                       <span className="text-slate-500">{t.colIn}:</span> {fmtTime(selected.checkinAt)}{" "}
                       <span className="text-slate-500 ml-2">{t.colOut}:</span>{" "}

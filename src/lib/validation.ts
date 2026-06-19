@@ -14,6 +14,7 @@ export const CheckinSchema = z.object({
   hostId: z.string().max(64).nullish(),
   hostName: z.string().trim().min(2).max(80),
   hostDepartment: z.string().trim().max(80).optional().default(""),
+  destination: z.string().trim().max(120).optional().default(""),
   // Selfie is downscaled client-side; cap defends against oversized bodies.
   photoDataUrl: z
     .string()
@@ -49,6 +50,7 @@ export const VisitUpdateSchema = z
     purpose: z.string().trim().min(2).max(120),
     hostName: z.string().trim().min(2).max(80),
     hostDepartment: z.string().trim().max(80),
+    destination: z.string().trim().max(120),
     notes: z.string().trim().max(500),
   })
   .partial();

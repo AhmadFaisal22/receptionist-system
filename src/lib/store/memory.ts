@@ -66,6 +66,7 @@ export class MemoryStore implements Store {
       hostId: input.hostId ?? null,
       hostName: input.hostName,
       hostDepartment: input.hostDepartment ?? "",
+      destination: input.destination ?? "",
       photoDataUrl: input.photoDataUrl ?? null,
       signatureDataUrl: input.signatureDataUrl,
       notes: "",

@@ -5,6 +5,7 @@ import SignatureField from "@/components/SignatureField";
 import BackToMenu from "@/components/BackToMenu";
 import Logo from "@/components/Logo";
 import { dict, LANGS, PURPOSES, type Purpose } from "@/lib/i18n";
+import { LOCATIONS } from "@/lib/config";
 import { useLang } from "@/lib/useLang";
 
 interface EmployeeOption {
@@ -51,6 +52,7 @@ export default function CheckinPage() {
   const [purposeOther, setPurposeOther] = useState("");
   const [hostQuery, setHostQuery] = useState("");
   const [host, setHost] = useState<EmployeeOption | null>(null);
+  const [destination, setDestination] = useState("");
   const [suggestions, setSuggestions] = useState<EmployeeOption[]>([]);
   const [photo, setPhoto] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
@@ -159,6 +161,7 @@ export default function CheckinPage() {
           hostId: host?.id ?? null,
           hostName: host?.name ?? hostQuery.trim(),
           hostDepartment: host?.department ?? "",
+          destination: destination.trim(),
           photoDataUrl: photo,
           signatureDataUrl: signature,
           lang,
@@ -218,6 +221,12 @@ export default function CheckinPage() {
               <span className="text-slate-500">{t.hostLabel}</span>
               <span>{host ? `${host.name} — ${host.department}` : hostQuery.trim()}</span>
             </div>
+            {destination && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">{t.destination}</span>
+                <span className="text-right">{destination}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-slate-500">{t.clockIn}</span>
               <span>
@@ -367,6 +376,20 @@ export default function CheckinPage() {
                 )}
               </div>
             )}
+
+            <label className={labelCls}>{t.destination}</label>
+            <select
+              className={inputCls}
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+            >
+              <option value="">{t.destinationNone}</option>
+              {LOCATIONS.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
           </section>
         )}
 

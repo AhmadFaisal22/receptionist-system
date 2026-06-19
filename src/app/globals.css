@@ -9,10 +9,20 @@ body {
   height: 100%;
 }
 
+/* Paint the brand background immediately so Android PWA / WebView launch and
+   overscroll never flash white (a common source of "flickering"). */
+html {
+  background: #f1f5f9;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background: #f1f5f9;
   color: #0f172a;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  /* Stop rubber-band overscroll + tap flashes that read as flicker on Android. */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @media print {

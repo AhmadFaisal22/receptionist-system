@@ -103,7 +103,11 @@ function LoginForm() {
     "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-slate-500";
 
   return (
-    <main className="flex-1 flex items-center justify-center p-4">
+    <main className="flex-1 flex flex-col p-4">
+      <div className="w-full max-w-sm mx-auto pt-1 pb-3">
+        <BackToMenu label={t.menu} />
+      </div>
+      <div className="flex-1 flex items-start justify-center">
       <form onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 p-6">
         <div className="mb-5">
           <div className="mb-3 flex justify-end">
@@ -143,11 +147,8 @@ function LoginForm() {
         >
           {busy ? t.signingIn : t.signIn}
         </button>
-
-        <div className="mt-4 text-center">
-          <BackToMenu />
-        </div>
       </form>
+      </div>
     </main>
   );
 }

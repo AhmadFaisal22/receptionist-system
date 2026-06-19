@@ -21,6 +21,8 @@ export interface Visit {
   hostId: string | null;
   hostName: string;
   hostDepartment: string;
+  /** Where in the site the visitor is heading (room/building). */
+  destination: string;
   photoDataUrl: string | null;
   signatureDataUrl: string;
   /** Receptionist note — items brought in/out, remarks. Empty by default. */
