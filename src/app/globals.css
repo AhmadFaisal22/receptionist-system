@@ -25,6 +25,82 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ---- App polish: smooth, accessible, top-tier feel ---- */
+
+/* Clear, consistent keyboard-focus ring everywhere. */
+:focus-visible {
+  outline: 2px solid #0f172a;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Gentle transitions on interactive elements. */
+  a,
+  button,
+  select,
+  input,
+  textarea,
+  [role="button"] {
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.12s ease;
+  }
+  /* Subtle press feedback (like native apps). */
+  button:not(:disabled):active,
+  a:active,
+  [role="button"]:active {
+    transform: scale(0.97);
+  }
+
+  @keyframes vlog-pop {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes vlog-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .vlog-pop {
+    animation: vlog-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .vlog-fade {
+    animation: vlog-fade 0.15s ease-out;
+  }
+  @keyframes vlog-shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  .vlog-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: #e2e8f0;
+    border-radius: 6px;
+  }
+  .vlog-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    animation: vlog-shimmer 1.3s infinite;
+  }
+}
+
 @media print {
   /* Wide visitor tables fit A4 landscape without trimming columns. */
   @page {

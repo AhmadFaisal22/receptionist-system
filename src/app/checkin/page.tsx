@@ -68,6 +68,7 @@ export default function CheckinPage() {
     if (!result || visitStatus !== "pending") return;
     let cancelled = false;
     const poll = async () => {
+      if (document.hidden) return;
       try {
         const res = await fetch(
           `/api/visit-status?token=${encodeURIComponent(result.exitToken)}`,

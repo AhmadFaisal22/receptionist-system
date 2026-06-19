@@ -81,6 +81,22 @@ function StatusPill({ visit, t }: { visit: PublicVisit; t: StaffMessages }) {
   );
 }
 
+function SkeletonRows({ cols, cell, rows = 6 }: { cols: number; cell: string; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, r) => (
+        <tr key={r}>
+          {Array.from({ length: cols }).map((_, c) => (
+            <td key={c} className={cell}>
+              <div className="vlog-skeleton h-4 w-full" />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 function AnimatedNumber({ value }: { value: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const prev = useRef(0);
@@ -178,6 +194,7 @@ export default function DashboardClient({
   const [busy, setBusy] = useState(false);
   const [editError, setEditError] = useState("");
   const [live, setLive] = useState(false);
+  const [loading, setLoading] = useState(true);
   const prevIds = useRef<Set<string>>(new Set());
   const firstLoad = useRef(true);
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
@@ -199,14 +216,28 @@ export default function DashboardClient({
       setLive(true);
     } catch {
       setLive(false);
+    } finally {
+      setLoading(false);
     }
   }, [date, showAll, loginNext]);
 
   useEffect(() => {
     firstLoad.current = true;
+    setLoading(true);
     load();
-    const timer = setInterval(load, 4000);
-    return () => clearInterval(timer);
+    // Poll for updates, but skip while the tab is hidden (saves battery/requests
+    // on mobile) and refresh instantly when the user returns.
+    const timer = setInterval(() => {
+      if (!document.hidden) load();
+    }, 4000);
+    const onVisible = () => {
+      if (!document.hidden) load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [load]);
 
   // GSAP: slide-in + highlight for rows that appeared since the last poll.
@@ -541,13 +572,16 @@ export default function DashboardClient({
               </tr>
             </thead>
             <tbody ref={tbodyRef}>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="border border-slate-300 px-2 py-10 text-center text-slate-400">
-                    {t.emptyToday}
-                  </td>
-                </tr>
-              )}
+              {filtered.length === 0 &&
+                (loading ? (
+                  <SkeletonRows cols={9} cell={td} />
+                ) : (
+                  <tr>
+                    <td colSpan={9} className="border border-slate-300 px-2 py-10 text-center text-slate-400">
+                      {t.emptyToday}
+                    </td>
+                  </tr>
+                ))}
               {filtered.map((v, i) => (
                 <tr
                   key={v.id}
@@ -597,13 +631,16 @@ export default function DashboardClient({
               </tr>
             </thead>
             <tbody ref={tbodyRef}>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
-                    {t.emptyToday}
-                  </td>
-                </tr>
-              )}
+              {filtered.length === 0 &&
+                (loading ? (
+                  <SkeletonRows cols={8} cell="px-3 py-2.5" />
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                      {t.emptyToday}
+                    </td>
+                  </tr>
+                ))}
               {filtered.map((v, i) => (
                 <tr
                   key={v.id}
@@ -643,14 +680,14 @@ export default function DashboardClient({
 
       {selected && (
         <div
-          className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-20"
+          className="vlog-fade fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-20"
           onClick={() => {
             setSelected(null);
             setEditing(false);
           }}
         >
           <div
-            className="w-full max-w-md rounded-3xl bg-white p-6 max-h-[90vh] overflow-y-auto"
+            className="vlog-pop w-full max-w-md rounded-3xl bg-white p-6 max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
