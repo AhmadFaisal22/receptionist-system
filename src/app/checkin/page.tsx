@@ -59,7 +59,35 @@ export default function CheckinPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [visitStatus, setVisitStatus] = useState<string>("pending");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // After check-in, poll our own visit status (via the secret exit token) so the
+  // screen flips to "approved" the moment a guard/receptionist confirms.
+  useEffect(() => {
+    if (!result || visitStatus !== "pending") return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await fetch(
+          `/api/visit-status?token=${encodeURIComponent(result.exitToken)}`,
+          { cache: "no-store" },
+        );
+        if (res.ok && !cancelled) {
+          const d = (await res.json()) as { status?: string };
+          if (d.status) setVisitStatus(d.status);
+        }
+      } catch {
+        // offline — keep waiting
+      }
+    };
+    poll();
+    const id = setInterval(poll, 4000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [result, visitStatus]);
 
   useEffect(() => {
     if (host || hostQuery.trim().length < 2) {
@@ -208,10 +236,25 @@ export default function CheckinPage() {
           </div>
           <h1 className="text-xl font-semibold mt-3">{t.confirmedTitle}</h1>
           <p className="font-mono text-3xl tracking-wider my-3">{result.code}</p>
-          <p className="text-sm text-slate-500">{t.showGuard}</p>
-          <span className="inline-block mt-3 rounded-full bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1">
-            {t.waitingGuard}
-          </span>
+          {visitStatus === "pending" ? (
+            <>
+              <p className="text-sm text-slate-500">{t.showGuard}</p>
+              <span className="inline-flex items-center gap-1.5 mt-3 rounded-full bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                {t.waitingGuard}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="inline-flex items-center gap-1.5 mt-2 rounded-full bg-green-100 text-green-800 text-sm font-semibold px-4 py-1.5">
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {t.accepted}
+              </span>
+              <p className="text-sm text-slate-500 mt-3">{t.acceptedHint}</p>
+            </>
+          )}
           <div className="border-t border-slate-200 mt-5 pt-4 text-left text-sm space-y-2">
             <div className="flex justify-between">
               <span className="text-slate-500">{t.nameLabel}</span>
