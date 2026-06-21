@@ -126,6 +126,23 @@ revoke execute on function purge_expired_photos(int) from public, anon, authenti
 --   select cron.schedule('auto-close-visits', '5 0 * * *', 'select auto_close_stale()');
 --   select cron.schedule('purge-photos', '15 0 * * *', 'select purge_expired_photos(30)');
 
+-- ------------------------------------------------------------
+-- Least-privilege hardening: the rls_auto_enable() event-trigger helper
+-- (auto-enables RLS on newly created public tables) must never be callable
+-- from the public REST API. Event triggers still fire as the owner, so this
+-- only removes the anon/authenticated RPC attack surface.
+-- ------------------------------------------------------------
+do $$
+begin
+  if exists (
+    select 1 from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'rls_auto_enable'
+  ) then
+    revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+  end if;
+end $$;
+
 -- Seed the employee directory (edit to your real staff, or use /admin).
 insert into employees (name, department) values
   ('Rina Wijaya', 'HR'),

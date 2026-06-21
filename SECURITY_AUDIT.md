@@ -36,6 +36,26 @@ rate limiting, and a hardened production CSP.
 
 ---
 
+## 0.1 Remediation Log (2026-06-19)
+
+Hardening applied during this review:
+
+- **HSTS added** (F-05 → Resolved): `Strict-Transport-Security: max-age=63072000;
+  includeSubDomains; preload` (`next.config.ts`).
+- **Rate-limit coverage extended** (F-01 → partially mitigated; still in-memory):
+  the public `code+phone` checkout branch now has a tighter 5/min limit, and all
+  authenticated mutations (`PATCH`/`DELETE /api/visits/[id]`, confirm, checkout)
+  are capped at 60/min/IP for defense-in-depth.
+- **Supabase advisor finding fixed:** `public.rls_auto_enable()` (a SECURITY
+  DEFINER event-trigger helper) was REST-callable by `anon`/`authenticated`;
+  `EXECUTE` revoked from `public, anon, authenticated`. Security advisor re-run
+  shows **0 warnings** (only the two intentional deny-by-default `INFO` notices
+  remain).
+- **Verified:** all DB access uses the parameterized Supabase SDK (no raw SQL),
+  and CSV export escapes spreadsheet formula injection (`lib/csv.ts`).
+
+---
+
 ## 1. Scope & Methodology
 
 - **In scope:** Supabase schema & RLS (`supabase/schema.sql`), authentication &

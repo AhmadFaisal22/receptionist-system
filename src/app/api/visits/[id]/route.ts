@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { getStore, toPublic } from "@/lib/store";
 import { VisitUpdateSchema, zodIssues } from "@/lib/validation";
 
@@ -12,6 +13,10 @@ export async function PATCH(
   const session = await requireRole("receptionist", "admin");
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  // Defense-in-depth: cap mutation volume even for authenticated clients.
+  if (!rateLimit(`staffmut:${clientIp(req)}`, 60, 60_000)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   const body = await req.json().catch(() => null);
@@ -29,12 +34,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   const session = await requireRole("receptionist", "admin");
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!rateLimit(`staffmut:${clientIp(req)}`, 60, 60_000)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   const { id } = await ctx.params;

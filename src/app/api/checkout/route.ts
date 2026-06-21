@@ -21,6 +21,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Validation failed" }, { status: 400 });
   }
 
+  // The code+phone path is a guessable-code enumeration surface (the exit token
+  // is a random UUID and not). Apply a tighter limit to that branch only.
+  if (!("token" in parsed.data) && !rateLimit(`checkout-cp:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: "Too many attempts, please wait" }, { status: 429 });
+  }
+
   const store = getStore();
   const visit =
     "token" in parsed.data

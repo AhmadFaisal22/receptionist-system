@@ -21,6 +21,9 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
+  // Force HTTPS for two years incl. subdomains (OWASP A02/A05). Vercel serves
+  // HTTPS; on plain-HTTP LAN this header is simply ignored by the browser.
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
 const nextConfig: NextConfig = {
