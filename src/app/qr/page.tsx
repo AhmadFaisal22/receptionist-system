@@ -59,6 +59,18 @@ export default function QrPostersPage() {
           <p className="text-xs text-slate-500">Scan when leaving the site · 离开时扫码登记</p>
           <p className="font-mono text-xs text-slate-400 mt-3">{origin}/checkout</p>
         </div>
+
+        {/* Separate poster for logging incoming packages/documents (staff). */}
+        <div className="rounded-3xl border-4 border-blue-600 bg-white p-8 text-center md:col-span-2 md:max-w-md md:mx-auto md:w-full">
+          <p className="text-2xl font-bold text-blue-700">INCOMING ITEMS</p>
+          <p className="text-sm text-slate-500 mb-1">Barang masuk · Incoming items · 物品登记</p>
+          <div className="flex justify-center my-5">
+            <QRCodeSVG value={`${origin}/items`} size={220} />
+          </div>
+          <p className="text-sm font-medium">Scan untuk mencatat paket / dokumen</p>
+          <p className="text-xs text-slate-500">Scan to log a package / document · 扫码登记包裹/文件</p>
+          <p className="font-mono text-xs text-slate-400 mt-3">{origin}/items</p>
+        </div>
       </div>
     </main>
   );

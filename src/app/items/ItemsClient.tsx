@@ -49,7 +49,9 @@ async function downscalePhoto(file: File, maxDim = 800, quality = 0.8): Promise<
 
 function StatusBadge({ status, t }: { status: ItemStatus; t: ItemMessages }) {
   return (
-    <span className={`inline-block rounded-full text-xs font-medium px-2.5 py-0.5 ${STATUS_STYLE[status]}`}>
+    <span
+      className={`inline-block rounded-full text-xs font-medium px-2.5 py-0.5 text-center whitespace-nowrap ${STATUS_STYLE[status]}`}
+    >
       {t.statuses[status]}
     </span>
   );
@@ -78,6 +80,8 @@ export default function ItemsClient({
   const [selected, setSelected] = useState<IncomingItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [collectSig, setCollectSig] = useState<string | null>(null);
+  const [pdfMenu, setPdfMenu] = useState(false);
+  const exportQs = showAll ? `all=1&lang=${lang}` : `date=${date}&lang=${lang}`;
 
   // Quick-add form
   const [adding, setAdding] = useState(false);
@@ -235,6 +239,11 @@ export default function ItemsClient({
     }
   }
 
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.replace("/login");
+  }
+
   async function remove(item: IncomingItem) {
     if (!window.confirm(t.confirmDelete)) return;
     setBusy(true);
@@ -277,6 +286,9 @@ export default function ItemsClient({
             {user} ({role})
           </span>
           <BackToMenu label={st.menu} className="text-xs" />
+          <button onClick={logout} className="text-xs text-slate-500 underline">
+            {st.signOut}
+          </button>
         </div>
       </header>
 
@@ -329,6 +341,52 @@ export default function ItemsClient({
         >
           {showAll ? t.viewByDate : t.viewAll}
         </button>
+        <div className="relative">
+          <button
+            onClick={() => setPdfMenu((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-400"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/pdf.svg" alt="" className="h-4 w-4" />
+            PDF
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          {pdfMenu && (
+            <>
+              <button className="fixed inset-0 z-10 cursor-default" aria-label="close" onClick={() => setPdfMenu(false)} />
+              <div className="absolute right-0 mt-1 z-20 w-44 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+                <a
+                  href={`/items/print?${exportQs}&action=save`}
+                  target="_blank"
+                  onClick={() => setPdfMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="m7 10 5 5 5-5" />
+                    <path d="M12 15V3" />
+                  </svg>
+                  {st.savePdf}
+                </a>
+                <a
+                  href={`/items/print?${exportQs}&action=print`}
+                  target="_blank"
+                  onClick={() => setPdfMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 border-t border-slate-100"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 9V2h12v7" />
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                    <rect x="6" y="14" width="12" height="8" rx="1" />
+                  </svg>
+                  {st.printPdf}
+                </a>
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
       {/* Quick-add form */}
