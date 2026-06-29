@@ -60,6 +60,41 @@ create index if not exists visits_exit_token_idx on visits (exit_token);
 create index if not exists visits_status_idx on visits (status);
 
 -- ------------------------------------------------------------
+-- Incoming Items: packages/documents logged at the gate & reception.
+-- Separate module from the visitor log; shared by guards + reception.
+-- ------------------------------------------------------------
+create sequence if not exists item_code_seq start 1;
+
+create table if not exists incoming_items (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique
+    default 'ITM-' || lpad(nextval('item_code_seq')::text, 4, '0'),
+  received_at timestamptz not null default now(),
+  sender text not null check (char_length(sender) between 1 and 120),
+  item_type text not null check (item_type in ('document','brochure','notes','hampers','package')),
+  description text not null default '' check (char_length(description) <= 300),
+  recipient_id uuid references employees (id) on delete set null,
+  recipient_name text not null check (char_length(recipient_name) between 2 and 80),
+  recipient_department text not null default '',
+  status text not null default 'received_guard'
+    check (status in ('received_guard','at_reception','collected')),
+  proof_signature text check (proof_signature is null or proof_signature like 'data:image/png;base64,%'),
+  proof_photo text check (proof_photo is null or proof_photo like 'data:image/%'),
+  logged_by text not null default '',
+  collected_at timestamptz,
+  collected_proof text check (collected_proof is null or collected_proof like 'data:image/png;base64,%'),
+  received_date date not null default ((now() at time zone 'Asia/Jakarta')::date),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists incoming_items_received_date_idx on incoming_items (received_date);
+create index if not exists incoming_items_status_idx on incoming_items (status);
+create index if not exists incoming_items_recipient_idx on incoming_items (recipient_id);
+
+alter table incoming_items enable row level security;
+
+-- ------------------------------------------------------------
 -- Row Level Security: enabled, deny-by-default.
 -- No policies are created for anon/authenticated on purpose:
 -- with RLS enabled and zero policies, those roles can do NOTHING,

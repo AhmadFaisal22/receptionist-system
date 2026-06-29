@@ -1,8 +1,22 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { PHOTO_RETENTION_DAYS } from "../config";
 import { phonesMatch } from "../phone";
-import type { CheckoutMethod, Employee, Lang, Visit, VisitStatus } from "../types";
-import type { CheckinInput, VisitUpdateInput } from "../validation";
+import type {
+  CheckoutMethod,
+  Employee,
+  IncomingItem,
+  ItemStatus,
+  ItemType,
+  Lang,
+  Visit,
+  VisitStatus,
+} from "../types";
+import type {
+  CheckinInput,
+  ItemCreateInput,
+  ItemUpdateInput,
+  VisitUpdateInput,
+} from "../validation";
 import type { Store } from "./index";
 
 // Production store. The service-role key is server-only (never NEXT_PUBLIC_)
@@ -37,6 +51,48 @@ interface EmployeeRow {
   name: string;
   department: string;
   active: boolean;
+}
+
+interface ItemRow {
+  id: string;
+  code: string;
+  received_at: string;
+  sender: string;
+  item_type: string;
+  description: string;
+  recipient_id: string | null;
+  recipient_name: string;
+  recipient_department: string;
+  status: string;
+  proof_signature: string | null;
+  proof_photo: string | null;
+  logged_by: string;
+  collected_at: string | null;
+  collected_proof: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapItem(r: ItemRow): IncomingItem {
+  return {
+    id: r.id,
+    code: r.code,
+    receivedAt: r.received_at,
+    sender: r.sender,
+    itemType: r.item_type as ItemType,
+    description: r.description ?? "",
+    recipientId: r.recipient_id,
+    recipientName: r.recipient_name,
+    recipientDepartment: r.recipient_department ?? "",
+    status: r.status as ItemStatus,
+    proofSignature: r.proof_signature,
+    proofPhoto: r.proof_photo,
+    loggedBy: r.logged_by ?? "",
+    collectedAt: r.collected_at,
+    collectedProof: r.collected_proof,
+    submittedAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
 }
 
 function mapVisit(r: VisitRow): Visit {
@@ -241,6 +297,94 @@ export class SupabaseStore implements Store {
   async deleteEmployee(id: string): Promise<boolean> {
     const { error, count } = await this.db
       .from("employees")
+      .delete({ count: "exact" })
+      .eq("id", id);
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  }
+
+  // ---- Incoming Items ----
+
+  async createItem(input: ItemCreateInput, loggedBy: string): Promise<IncomingItem> {
+    const { data, error } = await this.db
+      .from("incoming_items")
+      .insert({
+        sender: input.sender,
+        item_type: input.itemType,
+        description: input.description ?? "",
+        recipient_id: input.recipientId ?? null,
+        recipient_name: input.recipientName,
+        recipient_department: input.recipientDepartment ?? "",
+        proof_signature: input.proofSignature ?? null,
+        proof_photo: input.proofPhoto ?? null,
+        logged_by: loggedBy,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapItem(data as ItemRow);
+  }
+
+  async listItems(date: string): Promise<IncomingItem[]> {
+    const { data, error } = await this.db
+      .from("incoming_items")
+      .select()
+      .eq("received_date", date)
+      .order("received_at", { ascending: false });
+    if (error) throw error;
+    return ((data ?? []) as ItemRow[]).map(mapItem);
+  }
+
+  async listAllItems(): Promise<IncomingItem[]> {
+    const { data, error } = await this.db
+      .from("incoming_items")
+      .select()
+      .order("received_at", { ascending: false })
+      .limit(5000);
+    if (error) throw error;
+    return ((data ?? []) as ItemRow[]).map(mapItem);
+  }
+
+  async getItem(id: string): Promise<IncomingItem | null> {
+    const { data, error } = await this.db
+      .from("incoming_items")
+      .select()
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? mapItem(data as ItemRow) : null;
+  }
+
+  async updateItem(id: string, patch: ItemUpdateInput): Promise<IncomingItem | null> {
+    const existing = await this.getItem(id);
+    if (!existing) return null;
+
+    const row: Record<string, string | null> = { updated_at: new Date().toISOString() };
+    if (patch.status !== undefined) row.status = patch.status;
+    if (patch.sender !== undefined) row.sender = patch.sender;
+    if (patch.itemType !== undefined) row.item_type = patch.itemType;
+    if (patch.description !== undefined) row.description = patch.description;
+    if (patch.recipientName !== undefined) row.recipient_name = patch.recipientName;
+    if (patch.recipientDepartment !== undefined) row.recipient_department = patch.recipientDepartment;
+    if (patch.collectedProof !== undefined) row.collected_proof = patch.collectedProof;
+    // Stamp collection once, when the item first reaches "collected".
+    if (patch.status === "collected" && !existing.collectedAt) {
+      row.collected_at = new Date().toISOString();
+    }
+
+    const { data, error } = await this.db
+      .from("incoming_items")
+      .update(row)
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+    if (error) throw error;
+    return data ? mapItem(data as ItemRow) : null;
+  }
+
+  async deleteItem(id: string): Promise<boolean> {
+    const { error, count } = await this.db
+      .from("incoming_items")
       .delete({ count: "exact" })
       .eq("id", id);
     if (error) throw error;

@@ -37,3 +37,30 @@ export interface Visit {
 }
 
 export type PublicVisit = Omit<Visit, "exitToken">;
+
+// ---- Incoming Items module (packages/documents at the gate & reception) ----
+
+export type ItemType = "document" | "brochure" | "notes" | "hampers" | "package";
+export type ItemStatus = "received_guard" | "at_reception" | "collected";
+
+export interface IncomingItem {
+  id: string;
+  code: string;
+  receivedAt: string;
+  sender: string;
+  itemType: ItemType;
+  description: string;
+  recipientId: string | null;
+  recipientName: string;
+  recipientDepartment: string;
+  status: ItemStatus;
+  /** Proof captured when logged: digital signature and/or a photo of the label. */
+  proofSignature: string | null;
+  proofPhoto: string | null;
+  /** Role that created the entry (guard/receptionist/admin). */
+  loggedBy: string;
+  collectedAt: string | null;
+  collectedProof: string | null;
+  submittedAt: string;
+  updatedAt: string;
+}

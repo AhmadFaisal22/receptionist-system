@@ -2,8 +2,13 @@ import crypto from "crypto";
 import { PHOTO_RETENTION_DAYS } from "../config";
 import { localDate } from "../dates";
 import { phonesMatch } from "../phone";
-import type { CheckoutMethod, Employee, Visit } from "../types";
-import type { CheckinInput, VisitUpdateInput } from "../validation";
+import type { CheckoutMethod, Employee, IncomingItem, Visit } from "../types";
+import type {
+  CheckinInput,
+  ItemCreateInput,
+  ItemUpdateInput,
+  VisitUpdateInput,
+} from "../validation";
 import type { Store } from "./index";
 
 const SEED_EMPLOYEES: Omit<Employee, "id">[] = [
@@ -18,7 +23,9 @@ const SEED_EMPLOYEES: Omit<Employee, "id">[] = [
 export class MemoryStore implements Store {
   private visits: Visit[] = [];
   private employees: Employee[];
+  private items: IncomingItem[] = [];
   private seq = 1;
+  private itemSeq = 1;
 
   constructor() {
     this.employees = SEED_EMPLOYEES.map((e) => ({ ...e, id: crypto.randomUUID() }));
@@ -171,5 +178,68 @@ export class MemoryStore implements Store {
     const before = this.employees.length;
     this.employees = this.employees.filter((e) => e.id !== id);
     return this.employees.length < before;
+  }
+
+  // ---- Incoming Items ----
+
+  async createItem(input: ItemCreateInput, loggedBy: string): Promise<IncomingItem> {
+    const now = new Date().toISOString();
+    const item: IncomingItem = {
+      id: crypto.randomUUID(),
+      code: `ITM-${String(this.itemSeq++).padStart(4, "0")}`,
+      receivedAt: now,
+      sender: input.sender,
+      itemType: input.itemType,
+      description: input.description ?? "",
+      recipientId: input.recipientId ?? null,
+      recipientName: input.recipientName,
+      recipientDepartment: input.recipientDepartment ?? "",
+      status: "received_guard",
+      proofSignature: input.proofSignature ?? null,
+      proofPhoto: input.proofPhoto ?? null,
+      loggedBy,
+      collectedAt: null,
+      collectedProof: null,
+      submittedAt: now,
+      updatedAt: now,
+    };
+    this.items.unshift(item);
+    return item;
+  }
+
+  async listItems(date: string): Promise<IncomingItem[]> {
+    return this.items
+      .filter((i) => localDate(new Date(i.receivedAt)) === date)
+      .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+  }
+
+  async listAllItems(): Promise<IncomingItem[]> {
+    return [...this.items].sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+  }
+
+  async getItem(id: string): Promise<IncomingItem | null> {
+    return this.items.find((i) => i.id === id) ?? null;
+  }
+
+  async updateItem(id: string, patch: ItemUpdateInput): Promise<IncomingItem | null> {
+    const item = this.items.find((i) => i.id === id);
+    if (!item) return null;
+    const { collectedProof, ...fields } = patch;
+    Object.assign(item, fields);
+    // Stamp collection once, when the item first reaches "collected".
+    if (patch.status === "collected" && !item.collectedAt) {
+      item.collectedAt = new Date().toISOString();
+      if (collectedProof) item.collectedProof = collectedProof;
+    } else if (collectedProof) {
+      item.collectedProof = collectedProof;
+    }
+    item.updatedAt = new Date().toISOString();
+    return item;
+  }
+
+  async deleteItem(id: string): Promise<boolean> {
+    const before = this.items.length;
+    this.items = this.items.filter((i) => i.id !== id);
+    return this.items.length < before;
   }
 }

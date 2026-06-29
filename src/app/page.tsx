@@ -45,6 +45,13 @@ const ICONS: Record<string, ReactNode> = {
       <path d="M14 14h3v3M21 21v.01M21 14v.01M14 21v.01" />
     </svg>
   ),
+  items: (
+    <svg viewBox="0 0 24 24" {...sw}>
+      <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
+  ),
 };
 
 export default function Home() {
@@ -75,6 +82,14 @@ export default function Home() {
       icon: ICONS.staff,
       cls: "border-slate-200 hover:border-slate-400 bg-white",
       iconCls: "bg-slate-100 text-slate-700",
+    },
+    {
+      href: "/items",
+      title: t.menuItems,
+      desc: t.menuItemsDesc,
+      icon: ICONS.items,
+      cls: "border-amber-200 hover:border-amber-400 bg-gradient-to-br from-amber-50 to-white",
+      iconCls: "bg-amber-100 text-amber-700",
     },
     {
       href: "/qr",

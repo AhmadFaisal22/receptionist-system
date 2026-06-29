@@ -67,6 +67,46 @@ export const LoginSchema = z.object({
   password: z.string().min(1).max(200),
 });
 
+// ---- Incoming Items ----
+
+export const ITEM_TYPES = ["document", "brochure", "notes", "hampers", "package"] as const;
+export const ITEM_STATUSES = ["received_guard", "at_reception", "collected"] as const;
+
+const signatureData = z
+  .string()
+  .regex(/^data:image\/png;base64,[A-Za-z0-9+/=]+$/)
+  .max(400_000);
+const photoData = z
+  .string()
+  .regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/)
+  .max(4_000_000);
+
+export const ItemCreateSchema = z.object({
+  sender: z.string().trim().min(1).max(120),
+  itemType: z.enum(ITEM_TYPES),
+  description: z.string().trim().max(300).optional().default(""),
+  recipientId: z.string().max(64).nullish(),
+  recipientName: z.string().trim().min(2).max(80),
+  recipientDepartment: z.string().trim().max(80).optional().default(""),
+  proofSignature: signatureData.nullish(),
+  proofPhoto: photoData.nullish(),
+});
+export type ItemCreateInput = z.infer<typeof ItemCreateSchema>;
+
+export const ItemUpdateSchema = z
+  .object({
+    status: z.enum(ITEM_STATUSES),
+    sender: z.string().trim().min(1).max(120),
+    itemType: z.enum(ITEM_TYPES),
+    description: z.string().trim().max(300),
+    recipientName: z.string().trim().min(2).max(80),
+    recipientDepartment: z.string().trim().max(80),
+    collectedProof: signatureData,
+  })
+  .partial()
+  .refine((o) => Object.keys(o).length > 0, { message: "no fields to update" });
+export type ItemUpdateInput = z.infer<typeof ItemUpdateSchema>;
+
 export function zodIssues(error: z.ZodError): string[] {
   return error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
 }

@@ -1,5 +1,16 @@
-import type { CheckoutMethod, Employee, PublicVisit, Visit } from "../types";
-import type { CheckinInput, VisitUpdateInput } from "../validation";
+import type {
+  CheckoutMethod,
+  Employee,
+  IncomingItem,
+  PublicVisit,
+  Visit,
+} from "../types";
+import type {
+  CheckinInput,
+  ItemCreateInput,
+  ItemUpdateInput,
+  VisitUpdateInput,
+} from "../validation";
 import { MemoryStore } from "./memory";
 import { SupabaseStore } from "./supabase";
 
@@ -26,6 +37,16 @@ export interface Store {
     patch: Partial<Pick<Employee, "name" | "department" | "active">>,
   ): Promise<Employee | null>;
   deleteEmployee(id: string): Promise<boolean>;
+
+  // ---- Incoming Items ----
+  createItem(input: ItemCreateInput, loggedBy: string): Promise<IncomingItem>;
+  /** date is a local yyyy-mm-dd string (Asia/Jakarta) */
+  listItems(date: string): Promise<IncomingItem[]>;
+  /** every item, newest first (capped) — for the "view all" mode */
+  listAllItems(): Promise<IncomingItem[]>;
+  getItem(id: string): Promise<IncomingItem | null>;
+  updateItem(id: string, patch: ItemUpdateInput): Promise<IncomingItem | null>;
+  deleteItem(id: string): Promise<boolean>;
 }
 
 /** Strip the visitor-only exit token before anything reaches staff UIs. */
