@@ -28,6 +28,9 @@ export const LOCATIONS: LocationOption[] = [
   { id: "Ruang Machine / Server", en: "Machine / Server Room", zh: "机器 / 服务器机房" },
 ];
 
+// Units of measure for incoming items (edit to taste).
+export const UOMS: string[] = ["pcs", "box", "pack", "envelope", "roll", "set", "kg", "unit"];
+
 /** Translate a stored destination value for display. Falls back to the raw
  *  value for free-typed or legacy entries that aren't in the list. */
 export function locationLabel(value: string, lang: Lang): string {

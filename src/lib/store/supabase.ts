@@ -63,6 +63,8 @@ interface ItemRow {
   recipient_id: string | null;
   recipient_name: string;
   recipient_department: string;
+  quantity: number;
+  uom: string;
   status: string;
   proof_signature: string | null;
   proof_photo: string | null;
@@ -84,6 +86,8 @@ function mapItem(r: ItemRow): IncomingItem {
     recipientId: r.recipient_id,
     recipientName: r.recipient_name,
     recipientDepartment: r.recipient_department ?? "",
+    quantity: r.quantity ?? 1,
+    uom: r.uom ?? "pcs",
     status: r.status as ItemStatus,
     proofSignature: r.proof_signature,
     proofPhoto: r.proof_photo,
@@ -315,6 +319,8 @@ export class SupabaseStore implements Store {
         recipient_id: input.recipientId ?? null,
         recipient_name: input.recipientName,
         recipient_department: input.recipientDepartment ?? "",
+        quantity: input.quantity ?? 1,
+        uom: input.uom ?? "pcs",
         proof_signature: input.proofSignature ?? null,
         proof_photo: input.proofPhoto ?? null,
         logged_by: loggedBy,
@@ -359,13 +365,15 @@ export class SupabaseStore implements Store {
     const existing = await this.getItem(id);
     if (!existing) return null;
 
-    const row: Record<string, string | null> = { updated_at: new Date().toISOString() };
+    const row: Record<string, string | number | null> = { updated_at: new Date().toISOString() };
     if (patch.status !== undefined) row.status = patch.status;
     if (patch.sender !== undefined) row.sender = patch.sender;
     if (patch.itemType !== undefined) row.item_type = patch.itemType;
     if (patch.description !== undefined) row.description = patch.description;
     if (patch.recipientName !== undefined) row.recipient_name = patch.recipientName;
     if (patch.recipientDepartment !== undefined) row.recipient_department = patch.recipientDepartment;
+    if (patch.quantity !== undefined) row.quantity = patch.quantity;
+    if (patch.uom !== undefined) row.uom = patch.uom;
     if (patch.collectedProof !== undefined) row.collected_proof = patch.collectedProof;
     // Stamp collection once, when the item first reaches "collected".
     if (patch.status === "collected" && !existing.collectedAt) {

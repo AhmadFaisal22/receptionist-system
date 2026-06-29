@@ -244,6 +244,7 @@ export const dict: Record<Lang, Messages> = { id, en, zh };
 
 const staffId = {
   staffLogin: "Masuk staf",
+  inStaffLogin: "Anda berada di menu Masuk Staf",
   role: "Peran",
   roleReceptionist: "Resepsionis",
   roleGuard: "Satpam",
@@ -354,6 +355,7 @@ export type StaffMessages = typeof staffId;
 
 const staffEn: StaffMessages = {
   staffLogin: "Staff login",
+  inStaffLogin: "You're in the Staff Login menu",
   role: "Role",
   roleReceptionist: "Receptionist",
   roleGuard: "Security guard",
@@ -462,6 +464,7 @@ const staffEn: StaffMessages = {
 
 const staffZh: StaffMessages = {
   staffLogin: "员工登录",
+  inStaffLogin: "您正在员工登录菜单",
   role: "角色",
   roleReceptionist: "前台",
   roleGuard: "保安",
@@ -568,8 +571,12 @@ export const staffDict: Record<Lang, StaffMessages> = {
 const itemsId = {
   title: "Barang Masuk",
   subtitle: "Log bersama — gerbang & resepsionis",
+  inItemsMenu: "Anda berada di menu Barang Masuk",
   logItem: "Catat barang",
   formTitle: "Catat barang masuk",
+  qtyLabel: "Jumlah",
+  uomLabel: "Satuan",
+  fillFirst: "Lengkapi kolom wajib dulu (pengirim & penerima).",
   cols: ["No", "Diterima", "Pengirim", "Jenis", "Deskripsi", "Penerima", "Dept", "Status", "Bukti"],
   types: {
     document: "Dokumen",
@@ -626,8 +633,12 @@ export type ItemMessages = typeof itemsId;
 const itemsEn: ItemMessages = {
   title: "Incoming Items",
   subtitle: "Shared log — gate & reception",
+  inItemsMenu: "You're in the Incoming Items menu",
   logItem: "Log item",
   formTitle: "Log an incoming item",
+  qtyLabel: "Quantity",
+  uomLabel: "Unit",
+  fillFirst: "Complete the required fields first (sender & recipient).",
   cols: ["No", "Received", "Sender", "Type", "Description", "Recipient", "Dept", "Status", "Proof"],
   types: {
     document: "Document",
@@ -682,8 +693,12 @@ const itemsEn: ItemMessages = {
 const itemsZh: ItemMessages = {
   title: "物品登记",
   subtitle: "共享记录 — 门岗与前台",
+  inItemsMenu: "您正在物品登记菜单",
   logItem: "登记物品",
   formTitle: "登记进入物品",
+  qtyLabel: "数量",
+  uomLabel: "单位",
+  fillFirst: "请先填写必填项（寄件人和收件人）。",
   cols: ["序号", "接收时间", "寄件人", "物品类型", "物品描述", "收件人", "部门", "状态", "凭证"],
   types: {
     document: "文件",

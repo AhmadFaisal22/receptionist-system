@@ -194,6 +194,8 @@ export class MemoryStore implements Store {
       recipientId: input.recipientId ?? null,
       recipientName: input.recipientName,
       recipientDepartment: input.recipientDepartment ?? "",
+      quantity: input.quantity ?? 1,
+      uom: input.uom ?? "pcs",
       status: "received_guard",
       proofSignature: input.proofSignature ?? null,
       proofPhoto: input.proofPhoto ?? null,

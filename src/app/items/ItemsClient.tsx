@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fmtDate, fmtTime, localDate } from "@/lib/dates";
 import { itemsDict, staffDict, type ItemMessages } from "@/lib/i18n";
 import { ITEM_STATUSES, ITEM_TYPES } from "@/lib/validation";
+import { UOMS } from "@/lib/config";
 import { useLang } from "@/lib/useLang";
 import type { IncomingItem, ItemStatus } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
@@ -50,7 +51,7 @@ async function downscalePhoto(file: File, maxDim = 800, quality = 0.8): Promise<
 function StatusBadge({ status, t }: { status: ItemStatus; t: ItemMessages }) {
   return (
     <span
-      className={`inline-block rounded-full text-xs font-medium px-2.5 py-0.5 text-center whitespace-nowrap ${STATUS_STYLE[status]}`}
+      className={`inline-block rounded-2xl text-xs font-medium px-2.5 py-0.5 text-center leading-tight break-words ${STATUS_STYLE[status]}`}
     >
       {t.statuses[status]}
     </span>
@@ -88,6 +89,8 @@ export default function ItemsClient({
   const [sender, setSender] = useState("");
   const [itemType, setItemType] = useState<(typeof ITEM_TYPES)[number]>("package");
   const [description, setDescription] = useState("");
+  const [qty, setQty] = useState(1);
+  const [uom, setUom] = useState("pcs");
   const [recipientQuery, setRecipientQuery] = useState("");
   const [recipient, setRecipient] = useState<EmployeeOption | null>(null);
   const [suggestions, setSuggestions] = useState<EmployeeOption[]>([]);
@@ -167,6 +170,8 @@ export default function ItemsClient({
     setSender("");
     setItemType("package");
     setDescription("");
+    setQty(1);
+    setUom("pcs");
     setRecipientQuery("");
     setRecipient(null);
     setSuggestions([]);
@@ -203,6 +208,8 @@ export default function ItemsClient({
           recipientId: recipient?.id ?? null,
           recipientName,
           recipientDepartment: recipient?.department ?? "",
+          quantity: Number.isFinite(qty) && qty >= 1 ? Math.floor(qty) : 1,
+          uom,
           proofSignature: signature,
           proofPhoto: photo,
         }),
@@ -261,6 +268,9 @@ export default function ItemsClient({
   const inputCls =
     "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-slate-500";
   const td = "border border-slate-300 px-3 py-2 align-top break-words [overflow-wrap:anywhere]";
+  // Proof (photo/signature) stays locked until the required fields are filled.
+  const formReady =
+    sender.trim().length >= 1 && (recipient?.name ?? recipientQuery.trim()).length >= 2;
 
   return (
     <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
@@ -291,6 +301,10 @@ export default function ItemsClient({
           </button>
         </div>
       </header>
+
+      <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-center text-xs font-medium text-amber-800">
+        {t.inItemsMenu}
+      </div>
 
       {/* Controls */}
       <section className="flex items-center gap-2 mt-5 flex-wrap">
@@ -408,6 +422,28 @@ export default function ItemsClient({
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">{t.qtyLabel}</label>
+              <input
+                type="number"
+                min={1}
+                max={100000}
+                inputMode="numeric"
+                className={inputCls}
+                value={qty}
+                onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">{t.uomLabel}</label>
+              <select className={inputCls} value={uom} onChange={(e) => setUom(e.target.value)}>
+                {UOMS.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="sm:col-span-2">
               <label className="block text-xs text-slate-500 mb-1">{t.descLabel}</label>
               <input className={inputCls} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t.descPh} maxLength={300} />
@@ -449,30 +485,36 @@ export default function ItemsClient({
             </div>
           </div>
 
-          {/* Proof (optional) */}
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">{t.photoLabel}</label>
-              <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhoto(e.target.files?.[0])} />
-              {photo ? (
-                <div className="flex items-center gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo} alt="item" className="w-16 h-16 rounded-xl object-cover border border-slate-200" />
-                  <button type="button" className="text-sm text-slate-500 underline" onClick={() => fileRef.current?.click()}>
-                    {t.photoRetake}
+          {/* Proof (optional) — locked until required fields are filled. */}
+          {formReady ? (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">{t.photoLabel}</label>
+                <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhoto(e.target.files?.[0])} />
+                {photo ? (
+                  <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo} alt="item" className="w-16 h-16 rounded-xl object-cover border border-slate-200" />
+                    <button type="button" className="text-sm text-slate-500 underline" onClick={() => fileRef.current?.click()}>
+                      {t.photoRetake}
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => fileRef.current?.click()} className="w-full rounded-xl border border-dashed border-slate-300 py-3 text-sm text-slate-500">
+                    📷 {t.photoLabel}
                   </button>
-                </div>
-              ) : (
-                <button type="button" onClick={() => fileRef.current?.click()} className="w-full rounded-xl border border-dashed border-slate-300 py-3 text-sm text-slate-500">
-                  📷 {t.photoLabel}
-                </button>
-              )}
+                )}
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">{t.proofLabel}</label>
+                <SignatureField onChange={setSignature} hint={t.signatureHint} clearLabel={t.clear} />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">{t.proofLabel}</label>
-              <SignatureField onChange={setSignature} hint={t.signatureHint} clearLabel={t.clear} />
+          ) : (
+            <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-5 text-center text-xs text-slate-400">
+              🔒 {t.fillFirst}
             </div>
-          </div>
+          )}
 
           {formErr && <p className="text-sm text-red-600 mt-3">{formErr}</p>}
           <div className="flex gap-2 mt-4">
@@ -522,7 +564,10 @@ export default function ItemsClient({
                   <div className="text-[11px] text-slate-500">{fmtTime(i.receivedAt)}</div>
                 </td>
                 <td className={td}>{i.sender}</td>
-                <td className={td}>{t.types[i.itemType]}</td>
+                <td className={td}>
+                  {t.types[i.itemType]}
+                  <div className="text-[11px] text-slate-500">× {i.quantity} {i.uom}</div>
+                </td>
                 <td className={td}>{i.description || "—"}</td>
                 <td className={td}>{i.recipientName}</td>
                 <td className={td}>{i.recipientDepartment || "—"}</td>
@@ -561,6 +606,7 @@ export default function ItemsClient({
               <p><span className="text-slate-500">{t.receivedAt}:</span> {fmtDate(selected.receivedAt)} {fmtTime(selected.receivedAt)}</p>
               <p><span className="text-slate-500">{t.senderLabel}:</span> {selected.sender}</p>
               <p><span className="text-slate-500">{t.typeLabel}:</span> {t.types[selected.itemType]}</p>
+              <p><span className="text-slate-500">{t.qtyLabel}:</span> {selected.quantity} {selected.uom}</p>
               {selected.description && <p><span className="text-slate-500">{t.descLabel}:</span> {selected.description}</p>}
               <p><span className="text-slate-500">{t.loggedBy}:</span> {selected.loggedBy}</p>
               {selected.collectedAt && (

@@ -122,6 +122,10 @@ function LoginForm() {
           </div>
         </div>
 
+        <div className="mb-4 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-center text-xs font-medium text-slate-600">
+          {t.inStaffLogin}
+        </div>
+
         <label className="block text-sm text-slate-600 mb-1">{t.role}</label>
         <select className={inputCls} value={username} onChange={(e) => setUsername(e.target.value)}>
           <option value="reception">{t.roleReceptionist}</option>

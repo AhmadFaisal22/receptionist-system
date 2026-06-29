@@ -92,7 +92,9 @@ export default async function ItemsPrintPage({
                     {fmtDate(i.receivedAt)} {fmtTime(i.receivedAt)}
                   </td>
                   <td className={cell}>{i.sender}</td>
-                  <td className={cell}>{t.types[i.itemType]}</td>
+                  <td className={cell}>
+                    {t.types[i.itemType]} (× {i.quantity} {i.uom})
+                  </td>
                   <td className={cell}>{i.description}</td>
                   <td className={cell}>{i.recipientName}</td>
                   <td className={cell}>{i.recipientDepartment}</td>

@@ -53,6 +53,8 @@ export interface IncomingItem {
   recipientId: string | null;
   recipientName: string;
   recipientDepartment: string;
+  quantity: number;
+  uom: string;
   status: ItemStatus;
   /** Proof captured when logged: digital signature and/or a photo of the label. */
   proofSignature: string | null;

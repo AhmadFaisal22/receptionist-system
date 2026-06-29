@@ -14,6 +14,8 @@ function input(overrides: Partial<ItemCreateInput> = {}): ItemCreateInput {
     recipientId: null,
     recipientName: "Rina Wijaya",
     recipientDepartment: "HR",
+    quantity: 1,
+    uom: "pcs",
     proofSignature: null,
     proofPhoto: null,
     ...overrides,

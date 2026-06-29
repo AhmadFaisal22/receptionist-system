@@ -76,6 +76,8 @@ create table if not exists incoming_items (
   recipient_id uuid references employees (id) on delete set null,
   recipient_name text not null check (char_length(recipient_name) between 2 and 80),
   recipient_department text not null default '',
+  quantity integer not null default 1 check (quantity between 1 and 100000),
+  uom text not null default 'pcs' check (char_length(uom) between 1 and 20),
   status text not null default 'received_guard'
     check (status in ('received_guard','at_reception','collected')),
   proof_signature text check (proof_signature is null or proof_signature like 'data:image/png;base64,%'),
