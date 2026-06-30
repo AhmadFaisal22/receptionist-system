@@ -40,16 +40,17 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const goHome = useCallback(
-    // replace() so the login page is not left in history — pressing Back from
-    // the dashboard must not return to the (cached) login form.
+  // After an explicit login: honor ?next (deep-link back to /items etc.).
+  // replace() so the login page is not left in history.
+  const goAfterLogin = useCallback(
     (role: string) => window.location.replace(safeDest(role, next)),
     [next],
   );
 
-  // If already logged in, don't show the login form — bounce to the right home.
-  // Covers fresh loads and Back/Forward (bfcache) restores, and clears any
-  // password the browser restored from cache.
+  // If ALREADY logged in, bounce to the role's own dashboard and deliberately
+  // IGNORE ?next. A stale next (e.g. /items left over from an Incoming-Items
+  // deep link/QR, restored via bfcache or the router cache) was sending people
+  // who tapped "Staff Login" straight into the Incoming Items screen.
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
@@ -57,7 +58,7 @@ function LoginForm() {
         const res = await fetch("/api/auth/me", { cache: "no-store" });
         if (!cancelled && res.ok) {
           const { role } = (await res.json()) as { role: string };
-          goHome(role);
+          window.location.replace(HOME_BY_ROLE[role] ?? "/");
         }
       } catch {
         // not logged in or offline — stay on the form
@@ -73,7 +74,7 @@ function LoginForm() {
       cancelled = true;
       window.removeEventListener("pageshow", onPageShow);
     };
-  }, [goHome]);
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,7 +92,7 @@ function LoginForm() {
         return;
       }
       const { role } = (await res.json()) as { role: string };
-      goHome(role);
+      goAfterLogin(role);
     } catch {
       setError(t.networkError);
     } finally {
