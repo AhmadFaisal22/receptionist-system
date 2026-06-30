@@ -8,6 +8,7 @@ import { UOMS } from "@/lib/config";
 import { useLang } from "@/lib/useLang";
 import type { IncomingItem, ItemStatus } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
+import DownloadableImage from "@/components/DownloadableImage";
 import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
 import SignatureField from "@/components/SignatureField";
@@ -618,14 +619,24 @@ export default function ItemsClient({
                 <p className="text-xs text-slate-500 mb-1">{t.senderProofLabel}</p>
                 <div className="flex gap-3">
                   {selected.proofPhoto && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={selected.proofPhoto} alt="proof" className="w-24 h-24 rounded-2xl object-cover border border-slate-200" />
+                    <DownloadableImage
+                      src={selected.proofPhoto}
+                      alt="proof"
+                      name={`${selected.code}-photo`}
+                      title={st.download}
+                      wrapClassName="w-24 h-24 shrink-0"
+                      imgClassName="w-24 h-24 rounded-2xl object-cover border border-slate-200"
+                    />
                   )}
                   {selected.proofSignature && (
-                    <div className="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={selected.proofSignature} alt="sender signature" className="h-16 mx-auto object-contain" />
-                    </div>
+                    <DownloadableImage
+                      src={selected.proofSignature}
+                      alt="sender signature"
+                      name={`${selected.code}-sender-sign`}
+                      title={st.download}
+                      wrapClassName="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-2"
+                      imgClassName="h-16 mx-auto object-contain"
+                    />
                   )}
                 </div>
               </div>
@@ -635,10 +646,14 @@ export default function ItemsClient({
             {selected.collectedProof && (
               <div className="mt-4">
                 <p className="text-xs text-slate-500 mb-1">{t.receiverProofLabel}</p>
-                <div className="rounded-xl border border-green-200 bg-green-50 p-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={selected.collectedProof} alt="receiver signature" className="h-16 mx-auto object-contain" />
-                </div>
+                <DownloadableImage
+                  src={selected.collectedProof}
+                  alt="receiver signature"
+                  name={`${selected.code}-receiver-sign`}
+                  title={st.download}
+                  wrapClassName="rounded-xl border border-green-200 bg-green-50 p-2"
+                  imgClassName="h-16 mx-auto object-contain"
+                />
               </div>
             )}
 

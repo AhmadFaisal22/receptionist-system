@@ -8,6 +8,7 @@ import { useLang } from "@/lib/useLang";
 import type { PublicVisit } from "@/lib/types";
 import { LOCATIONS, locationLabel } from "@/lib/config";
 import BackToMenu from "@/components/BackToMenu";
+import DownloadableImage from "@/components/DownloadableImage";
 import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
 import SignOutButton from "@/components/SignOutButton";
@@ -774,11 +775,13 @@ export default function DashboardClient({
               <>
                 <div className="flex gap-3 mt-4">
                   {selected.photoDataUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
+                    <DownloadableImage
                       src={selected.photoDataUrl}
                       alt="visitor"
-                      className="w-24 h-24 rounded-2xl object-cover border border-slate-200"
+                      name={`${selected.code}-photo`}
+                      title={t.download}
+                      wrapClassName="w-24 h-24 shrink-0"
+                      imgClassName="w-24 h-24 rounded-2xl object-cover border border-slate-200"
                     />
                   ) : (
                     <div className="w-24 h-24 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
@@ -812,10 +815,14 @@ export default function DashboardClient({
                   </div>
                 </div>
                 <p className="text-xs text-slate-500 mt-4 mb-1">{t.signatureLabel}</p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={selected.signatureDataUrl} alt="signature" className="h-16 mx-auto object-contain" />
-                </div>
+                <DownloadableImage
+                  src={selected.signatureDataUrl}
+                  alt="signature"
+                  name={`${selected.code}-signature`}
+                  title={t.download}
+                  wrapClassName="rounded-xl border border-slate-200 bg-slate-50 p-2"
+                  imgClassName="h-16 mx-auto object-contain"
+                />
                 <div className="flex flex-wrap gap-2 mt-5">
                   {selected.status === "pending" && (
                     <button
