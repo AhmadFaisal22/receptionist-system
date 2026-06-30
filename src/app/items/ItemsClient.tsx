@@ -11,6 +11,7 @@ import BackToMenu from "@/components/BackToMenu";
 import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
 import SignatureField from "@/components/SignatureField";
+import SignOutButton from "@/components/SignOutButton";
 
 interface EmployeeOption {
   id: string;
@@ -296,9 +297,7 @@ export default function ItemsClient({
             {user} ({role})
           </span>
           <BackToMenu label={st.menu} className="text-xs" />
-          <button onClick={logout} className="text-xs text-slate-500 underline">
-            {st.signOut}
-          </button>
+          <SignOutButton label={st.signOut} onClick={logout} className="text-xs" />
         </div>
       </header>
 

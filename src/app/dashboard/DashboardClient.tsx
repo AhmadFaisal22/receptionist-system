@@ -10,6 +10,7 @@ import { LOCATIONS, locationLabel } from "@/lib/config";
 import BackToMenu from "@/components/BackToMenu";
 import LangToggle from "@/components/LangToggle";
 import Logo from "@/components/Logo";
+import SignOutButton from "@/components/SignOutButton";
 import TrafficCard from "@/components/TrafficCard";
 
 type Variant = "modern" | "logbook";
@@ -405,9 +406,7 @@ export default function DashboardClient({
             {user} ({role})
           </span>
           <BackToMenu label={t.menu} className="text-xs" />
-          <button onClick={logout} className="text-xs text-slate-500 underline">
-            {t.signOut}
-          </button>
+          <SignOutButton label={t.signOut} onClick={logout} className="text-xs" />
         </div>
       </header>
 
@@ -621,6 +620,7 @@ export default function DashboardClient({
             <thead>
               <tr className="text-[11px] uppercase tracking-wide text-slate-500 bg-slate-50 border-b border-slate-200">
                 <th className="px-3 py-3 font-semibold text-center">{t.colNo}</th>
+                <th className="px-3 py-3 font-semibold text-center whitespace-nowrap">{t.colDate}</th>
                 <th className="px-3 py-3 font-semibold text-left">{t.colVisitor}</th>
                 <th className="px-3 py-3 font-semibold text-left">{t.colPurpose}</th>
                 <th className="px-3 py-3 font-semibold text-left">{t.colHost}</th>
@@ -633,10 +633,10 @@ export default function DashboardClient({
             <tbody ref={tbodyRef}>
               {filtered.length === 0 &&
                 (loading ? (
-                  <SkeletonRows cols={8} cell="px-3 py-2.5" />
+                  <SkeletonRows cols={9} cell="px-3 py-2.5" />
                 ) : (
                   <tr>
-                    <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+                    <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                       {t.emptyToday}
                     </td>
                   </tr>
@@ -649,6 +649,7 @@ export default function DashboardClient({
                   className="border-b border-slate-100 last:border-0 cursor-pointer hover:bg-slate-50"
                 >
                   <td className="px-3 py-2.5 text-center">{i + 1}</td>
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">{fmtDate(v.submittedAt)}</td>
                   <td className="px-3 py-2.5">
                     <p className="font-medium">{v.name}</p>
                     <p className="text-xs text-slate-500">{v.institution}</p>

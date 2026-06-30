@@ -45,7 +45,7 @@ export default async function PrintPage({
   const th =
     "border border-slate-400 px-2 py-1.5 text-center align-middle bg-slate-100 whitespace-normal break-words [overflow-wrap:anywhere]";
 
-  const modernCols = [6, 18, 13, 19, 9, 9, 11, 15];
+  const modernCols = [5, 11, 16, 12, 17, 8, 8, 10, 13];
   const logbookCols = [5, 16, 10, 9, 9, 13, 12, 16, 10];
 
   return (
@@ -85,7 +85,7 @@ export default async function PrintPage({
               </colgroup>
               <thead>
                 <tr>
-                  {[t.colNo, t.colVisitor, t.colPurpose, t.colHost, t.colIn, t.colOut, t.colStatus, t.colSign].map(
+                  {[t.colNo, t.colDate, t.colVisitor, t.colPurpose, t.colHost, t.colIn, t.colOut, t.colStatus, t.colSign].map(
                     (h, i) => (
                       <th key={i} className={th}>
                         {h}
@@ -97,14 +97,15 @@ export default async function PrintPage({
               <tbody>
                 {visits.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="border border-slate-400 px-2 py-6 text-center text-slate-400">
+                    <td colSpan={9} className="border border-slate-400 px-2 py-6 text-center text-slate-400">
                       {t.printNoEntries}
                     </td>
                   </tr>
                 )}
                 {visits.map((v, idx) => (
                   <tr key={v.id}>
-                    <td className={cell}>{idx + 1}</td>
+                    <td className={`${cell} text-center`}>{idx + 1}</td>
+                    <td className={`${cell} text-center`}>{fmtDate(v.submittedAt)}</td>
                     <td className={cell}>
                       <div>{v.name}</div>
                       {v.institution && <div className="text-[10px] text-slate-500">{v.institution}</div>}

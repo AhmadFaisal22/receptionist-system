@@ -68,10 +68,11 @@ export async function GET(req: Request) {
   const headerRowNo = 7;
 
   if (variant === "modern") {
-    // Same columns as the admin/guard dashboard.
-    ws.columns = [12, 28, 20, 26, 12, 13, 12, 24].map((w) => ({ width: w }));
+    // Same columns as the admin/guard dashboard (Date before Visitor).
+    ws.columns = [10, 13, 28, 20, 26, 12, 13, 12, 24].map((w) => ({ width: w }));
     const headers = [
       t.colNo,
+      t.colDate,
       t.colVisitor,
       t.colPurpose,
       t.colHost,
@@ -89,13 +90,14 @@ export async function GET(req: Request) {
       c.alignment = { vertical: "middle", wrapText: true };
       c.border = border;
     });
-    const SIGN_COL = 8;
+    const SIGN_COL = 9;
     visits.forEach((v, idx) => {
       const rowNo = headerRowNo + 1 + idx;
       const row = ws.getRow(rowNo);
       row.height = 26;
       const values = [
         idx + 1,
+        fmtDate(v.submittedAt),
         v.institution ? `${v.name}\n${v.institution}` : v.name,
         purposeLabel(v.purpose),
         v.hostDepartment
@@ -109,7 +111,7 @@ export async function GET(req: Request) {
       values.forEach((val, i) => {
         const c = row.getCell(i + 1);
         c.value = val;
-        c.alignment = { vertical: "middle", wrapText: i === 1 };
+        c.alignment = { vertical: "middle", wrapText: i === 2 };
         c.border = border;
       });
       // Embed the signature image in the Sign column.
