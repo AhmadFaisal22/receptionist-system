@@ -186,7 +186,7 @@ export class MemoryStore implements Store {
     const now = new Date().toISOString();
     const item: IncomingItem = {
       id: crypto.randomUUID(),
-      code: `ITM-${String(this.itemSeq++).padStart(4, "0")}`,
+      code: `ITEM-${String(this.itemSeq++).padStart(4, "0")}`,
       receivedAt: now,
       sender: input.sender,
       itemType: input.itemType,

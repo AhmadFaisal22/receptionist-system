@@ -68,7 +68,7 @@ create sequence if not exists item_code_seq start 1;
 create table if not exists incoming_items (
   id uuid primary key default gen_random_uuid(),
   code text not null unique
-    default 'ITM-' || lpad(nextval('item_code_seq')::text, 4, '0'),
+    default 'ITEM-' || lpad(nextval('item_code_seq')::text, 4, '0'),
   received_at timestamptz not null default now(),
   sender text not null check (char_length(sender) between 1 and 120),
   item_type text not null check (item_type in ('document','brochure','notes','hampers','package')),

@@ -27,8 +27,8 @@ describe("MemoryStore — incoming items", () => {
     const store = new MemoryStore();
     const a = await store.createItem(input(), "guard");
     const b = await store.createItem(input({ sender: "J&T" }), "guard");
-    expect(a.code).toBe("ITM-0001");
-    expect(b.code).toBe("ITM-0002");
+    expect(a.code).toBe("ITEM-0001");
+    expect(b.code).toBe("ITEM-0002");
     expect(a.status).toBe("received_guard");
     expect(a.loggedBy).toBe("guard");
     expect(a.collectedAt).toBeNull();
