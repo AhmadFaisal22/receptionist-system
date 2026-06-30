@@ -615,17 +615,31 @@ export default function ItemsClient({
             </div>
 
             {(selected.proofPhoto || selected.proofSignature) && (
-              <div className="mt-4 flex gap-3">
-                {selected.proofPhoto && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={selected.proofPhoto} alt="proof" className="w-24 h-24 rounded-2xl object-cover border border-slate-200" />
-                )}
-                {selected.proofSignature && (
-                  <div className="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={selected.proofSignature} alt="signature" className="h-16 mx-auto object-contain" />
-                  </div>
-                )}
+              <div className="mt-4">
+                <p className="text-xs text-slate-500 mb-1">{t.senderProofLabel}</p>
+                <div className="flex gap-3">
+                  {selected.proofPhoto && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={selected.proofPhoto} alt="proof" className="w-24 h-24 rounded-2xl object-cover border border-slate-200" />
+                  )}
+                  {selected.proofSignature && (
+                    <div className="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={selected.proofSignature} alt="sender signature" className="h-16 mx-auto object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Receiver's signature captured at collection. */}
+            {selected.collectedProof && (
+              <div className="mt-4">
+                <p className="text-xs text-slate-500 mb-1">{t.receiverProofLabel}</p>
+                <div className="rounded-xl border border-green-200 bg-green-50 p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={selected.collectedProof} alt="receiver signature" className="h-16 mx-auto object-contain" />
+                </div>
               </div>
             )}
 
