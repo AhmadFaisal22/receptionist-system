@@ -91,7 +91,7 @@ export default function ItemsClient({
   const [sender, setSender] = useState("");
   const [itemType, setItemType] = useState<(typeof ITEM_TYPES)[number]>("package");
   const [description, setDescription] = useState("");
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState(""); // blank by default; parsed on submit
   const [uom, setUom] = useState("pcs");
   const [recipientQuery, setRecipientQuery] = useState("");
   const [recipient, setRecipient] = useState<EmployeeOption | null>(null);
@@ -172,7 +172,7 @@ export default function ItemsClient({
     setSender("");
     setItemType("package");
     setDescription("");
-    setQty(1);
+    setQty("");
     setUom("pcs");
     setRecipientQuery("");
     setRecipient(null);
@@ -210,7 +210,7 @@ export default function ItemsClient({
           recipientId: recipient?.id ?? null,
           recipientName,
           recipientDepartment: recipient?.department ?? "",
-          quantity: Number.isFinite(qty) && qty >= 0 ? Math.floor(qty) : 0,
+          quantity: qty === "" ? 1 : Math.min(100000, Math.max(0, parseInt(qty, 10))),
           uom,
           proofSignature: signature,
           proofPhoto: photo,
@@ -425,16 +425,16 @@ export default function ItemsClient({
             <div>
               <label className="block text-xs text-slate-500 mb-1">{t.qtyLabel}</label>
               <input
-                type="number"
-                min={0}
-                max={100000}
+                type="text"
                 inputMode="numeric"
+                placeholder="1"
+                maxLength={6}
                 className={inputCls}
                 value={qty}
-                onChange={(e) => {
-                  const n = parseInt(e.target.value, 10);
-                  setQty(Number.isNaN(n) ? 0 : Math.min(100000, Math.max(0, n)));
-                }}
+                onChange={(e) =>
+                  // digits only, drop leading zeros so "07" becomes "7"
+                  setQty(e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, ""))
+                }
               />
             </div>
             <div>
