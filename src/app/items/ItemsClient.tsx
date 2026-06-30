@@ -210,7 +210,7 @@ export default function ItemsClient({
           recipientId: recipient?.id ?? null,
           recipientName,
           recipientDepartment: recipient?.department ?? "",
-          quantity: Number.isFinite(qty) && qty >= 1 ? Math.floor(qty) : 1,
+          quantity: Number.isFinite(qty) && qty >= 0 ? Math.floor(qty) : 0,
           uom,
           proofSignature: signature,
           proofPhoto: photo,
@@ -426,12 +426,15 @@ export default function ItemsClient({
               <label className="block text-xs text-slate-500 mb-1">{t.qtyLabel}</label>
               <input
                 type="number"
-                min={1}
+                min={0}
                 max={100000}
                 inputMode="numeric"
                 className={inputCls}
                 value={qty}
-                onChange={(e) => setQty(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+                onChange={(e) => {
+                  const n = parseInt(e.target.value, 10);
+                  setQty(Number.isNaN(n) ? 0 : Math.min(100000, Math.max(0, n)));
+                }}
               />
             </div>
             <div>

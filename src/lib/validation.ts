@@ -88,7 +88,7 @@ export const ItemCreateSchema = z.object({
   recipientId: z.string().max(64).nullish(),
   recipientName: z.string().trim().min(2).max(80),
   recipientDepartment: z.string().trim().max(80).optional().default(""),
-  quantity: z.number().int().min(1).max(100_000).optional().default(1),
+  quantity: z.number().int().min(0).max(100_000).optional().default(1),
   uom: z.string().trim().min(1).max(20).optional().default("pcs"),
   proofSignature: signatureData.nullish(),
   proofPhoto: photoData.nullish(),
@@ -103,7 +103,7 @@ export const ItemUpdateSchema = z
     description: z.string().trim().max(300),
     recipientName: z.string().trim().min(2).max(80),
     recipientDepartment: z.string().trim().max(80),
-    quantity: z.number().int().min(1).max(100_000),
+    quantity: z.number().int().min(0).max(100_000),
     uom: z.string().trim().min(1).max(20),
     collectedProof: signatureData,
   })
