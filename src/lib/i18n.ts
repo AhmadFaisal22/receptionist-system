@@ -590,6 +590,9 @@ const itemsId = {
     notes: "Nota / Catatan",
     hampers: "Hampers",
     package: "Paket",
+    invoice: "Invoice & Kuitansi",
+    certificate: "Sertifikat",
+    proposal: "Proposal",
   } as Record<ItemType, string>,
   statuses: {
     received_guard: "Diterima Satpam",
@@ -654,6 +657,9 @@ const itemsEn: ItemMessages = {
     notes: "Notes",
     hampers: "Hampers",
     package: "Package",
+    invoice: "Invoice & Receipts",
+    certificate: "Certificates",
+    proposal: "Proposal",
   },
   statuses: {
     received_guard: "Received at Guard",
@@ -716,6 +722,9 @@ const itemsZh: ItemMessages = {
     notes: "便签",
     hampers: "礼品篮",
     package: "包裹",
+    invoice: "发票与收据",
+    certificate: "证书",
+    proposal: "提案",
   },
   statuses: {
     received_guard: "保安已签收",

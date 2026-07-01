@@ -71,7 +71,7 @@ create table if not exists incoming_items (
     default 'ITEM-' || lpad(nextval('item_code_seq')::text, 4, '0'),
   received_at timestamptz not null default now(),
   sender text not null check (char_length(sender) between 1 and 120),
-  item_type text not null check (item_type in ('document','brochure','notes','hampers','package')),
+  item_type text not null check (item_type in ('document','brochure','notes','hampers','package','invoice','certificate','proposal')),
   description text not null default '' check (char_length(description) <= 300),
   recipient_id uuid references employees (id) on delete set null,
   recipient_name text not null check (char_length(recipient_name) between 2 and 80),

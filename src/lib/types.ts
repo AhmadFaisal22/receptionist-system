@@ -40,7 +40,15 @@ export type PublicVisit = Omit<Visit, "exitToken">;
 
 // ---- Incoming Items module (packages/documents at the gate & reception) ----
 
-export type ItemType = "document" | "brochure" | "notes" | "hampers" | "package";
+export type ItemType =
+  | "document"
+  | "brochure"
+  | "notes"
+  | "hampers"
+  | "package"
+  | "invoice"
+  | "certificate"
+  | "proposal";
 export type ItemStatus = "received_guard" | "at_reception" | "collected";
 
 export interface IncomingItem {

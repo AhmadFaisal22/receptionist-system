@@ -820,6 +820,7 @@ export default function DashboardClient({
                   alt="signature"
                   name={`${selected.code}-signature`}
                   title={t.download}
+                  allowDownload={false}
                   wrapClassName="rounded-xl border border-slate-200 bg-slate-50 p-2"
                   imgClassName="h-16 mx-auto object-contain"
                 />

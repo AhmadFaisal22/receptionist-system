@@ -69,7 +69,16 @@ export const LoginSchema = z.object({
 
 // ---- Incoming Items ----
 
-export const ITEM_TYPES = ["document", "brochure", "notes", "hampers", "package"] as const;
+export const ITEM_TYPES = [
+  "document",
+  "brochure",
+  "notes",
+  "hampers",
+  "package",
+  "invoice",
+  "certificate",
+  "proposal",
+] as const;
 export const ITEM_STATUSES = ["received_guard", "at_reception", "collected"] as const;
 
 const signatureData = z

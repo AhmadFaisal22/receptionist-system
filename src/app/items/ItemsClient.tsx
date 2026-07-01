@@ -637,6 +637,7 @@ export default function ItemsClient({
                       alt="sender signature"
                       name={`${selected.code}-sender-sign`}
                       title={st.download}
+                      allowDownload={false}
                       wrapClassName="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-2"
                       imgClassName="h-16 mx-auto object-contain"
                     />
@@ -654,6 +655,7 @@ export default function ItemsClient({
                   alt="receiver signature"
                   name={`${selected.code}-receiver-sign`}
                   title={st.download}
+                  allowDownload={false}
                   wrapClassName="rounded-xl border border-green-200 bg-green-50 p-2"
                   imgClassName="h-16 mx-auto object-contain"
                 />

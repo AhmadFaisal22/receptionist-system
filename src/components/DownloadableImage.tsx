@@ -9,6 +9,7 @@ export default function DownloadableImage({
   title,
   wrapClassName = "",
   imgClassName,
+  allowDownload = true,
 }: {
   src: string;
   alt: string;
@@ -17,6 +18,8 @@ export default function DownloadableImage({
   title: string;
   wrapClassName?: string;
   imgClassName?: string;
+  /** Set false to hide the download button (e.g. signatures). */
+  allowDownload?: boolean;
 }) {
   const ext = src.startsWith("data:image/png")
     ? "png"
@@ -28,8 +31,9 @@ export default function DownloadableImage({
     <div className={`relative ${wrapClassName}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} className={imgClassName} />
-      <a
-        href={src}
+      {allowDownload && (
+        <a
+          href={src}
         download={`${name}.${ext}`}
         title={title}
         aria-label={title}
@@ -42,6 +46,7 @@ export default function DownloadableImage({
           <path d="M12 15V3" />
         </svg>
       </a>
+      )}
     </div>
   );
 }
