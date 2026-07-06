@@ -10,12 +10,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Lite rows only (no proof blobs) — proofs load on demand per record via
+  // /api/items/[id]/photo|signature|collected.
   const params = new URL(req.url).searchParams;
   const store = getStore();
   const items =
     params.get("all") === "1"
-      ? await store.listAllItems()
-      : await store.listItems(
+      ? await store.listAllItemsLite()
+      : await store.listItemsLite(
           params.get("date") && /^\d{4}-\d{2}-\d{2}$/.test(params.get("date")!)
             ? params.get("date")!
             : localDate(),

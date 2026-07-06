@@ -8,6 +8,8 @@ import type {
   ItemStatus,
   ItemType,
   Lang,
+  ListItem,
+  ListVisit,
   Visit,
   VisitStatus,
 } from "../types";
@@ -124,6 +126,62 @@ function mapVisit(r: VisitRow): Visit {
   };
 }
 
+// Explicit column lists that EXCLUDE the heavy base64 blobs, so the polled
+// dashboard queries pull only a few KB per row from the DB (Supabase egress).
+const VISIT_LITE_COLS =
+  "id,code,status,name,institution,phone,purpose,host_id,host_name,host_department,destination,notes,lang,submitted_at,checkin_at,checkout_at,checkout_method";
+const ITEM_LITE_COLS =
+  "id,code,received_at,sender,item_type,description,recipient_id,recipient_name,recipient_department,quantity,uom,status,logged_by,collected_at,created_at,updated_at";
+
+type VisitLiteRow = Omit<VisitRow, "photo_data" | "signature_data" | "exit_token">;
+type ItemLiteRow = Omit<ItemRow, "proof_signature" | "proof_photo" | "collected_proof"> & {
+  has_proof?: boolean;
+};
+
+function mapVisitLite(r: VisitLiteRow): ListVisit {
+  return {
+    id: r.id,
+    code: r.code,
+    status: r.status as VisitStatus,
+    name: r.name,
+    institution: r.institution,
+    phone: r.phone,
+    purpose: r.purpose,
+    hostId: r.host_id,
+    hostName: r.host_name,
+    hostDepartment: r.host_department,
+    destination: r.destination ?? "",
+    notes: r.notes ?? "",
+    lang: r.lang as Lang,
+    submittedAt: r.submitted_at,
+    checkinAt: r.checkin_at,
+    checkoutAt: r.checkout_at,
+    checkoutMethod: (r.checkout_method as CheckoutMethod | null) ?? null,
+  };
+}
+
+function mapItemLite(r: ItemLiteRow): ListItem {
+  return {
+    id: r.id,
+    code: r.code,
+    receivedAt: r.received_at,
+    sender: r.sender,
+    itemType: r.item_type as ItemType,
+    description: r.description ?? "",
+    recipientId: r.recipient_id,
+    recipientName: r.recipient_name,
+    recipientDepartment: r.recipient_department ?? "",
+    quantity: r.quantity ?? 1,
+    uom: r.uom ?? "pcs",
+    status: r.status as ItemStatus,
+    loggedBy: r.logged_by ?? "",
+    collectedAt: r.collected_at,
+    submittedAt: r.created_at,
+    updatedAt: r.updated_at,
+    hasProof: r.has_proof ?? false,
+  };
+}
+
 export class SupabaseStore implements Store {
   private db: SupabaseClient;
 
@@ -179,6 +237,38 @@ export class SupabaseStore implements Store {
       .limit(5000);
     if (error) throw error;
     return ((data ?? []) as VisitRow[]).map(mapVisit);
+  }
+
+  async listVisitsLite(date: string): Promise<ListVisit[]> {
+    await this.db.rpc("auto_close_stale");
+    const { data, error } = await this.db
+      .from("visits")
+      .select(VISIT_LITE_COLS)
+      .eq("submitted_date", date)
+      .order("submitted_at", { ascending: false });
+    if (error) throw error;
+    return ((data ?? []) as unknown as VisitLiteRow[]).map(mapVisitLite);
+  }
+
+  async listAllVisitsLite(): Promise<ListVisit[]> {
+    await this.db.rpc("auto_close_stale");
+    const { data, error } = await this.db
+      .from("visits")
+      .select(VISIT_LITE_COLS)
+      .order("submitted_at", { ascending: false })
+      .limit(5000);
+    if (error) throw error;
+    return ((data ?? []) as unknown as VisitLiteRow[]).map(mapVisitLite);
+  }
+
+  async listVisitTimestamps(): Promise<string[]> {
+    const { data, error } = await this.db
+      .from("visits")
+      .select("submitted_at")
+      .order("submitted_at", { ascending: false })
+      .limit(5000);
+    if (error) throw error;
+    return ((data ?? []) as { submitted_at: string }[]).map((r) => r.submitted_at);
   }
 
   async getVisit(id: string): Promise<Visit | null> {
@@ -349,6 +439,38 @@ export class SupabaseStore implements Store {
       .limit(5000);
     if (error) throw error;
     return ((data ?? []) as ItemRow[]).map(mapItem);
+  }
+
+  // `has_proof` is a generated column (see schema.sql). If that migration hasn't
+  // been applied yet, gracefully fall back to a select without it (hasProof=false)
+  // so the dashboard never errors.
+  private async itemsLite(
+    run: (cols: string) => Promise<{ data: unknown; error: unknown }>,
+  ): Promise<ListItem[]> {
+    let res = await run(`${ITEM_LITE_COLS},has_proof`);
+    if (res.error) res = await run(ITEM_LITE_COLS);
+    if (res.error) throw res.error;
+    return ((res.data ?? []) as ItemLiteRow[]).map(mapItemLite);
+  }
+
+  async listItemsLite(date: string): Promise<ListItem[]> {
+    return this.itemsLite(async (cols) =>
+      this.db
+        .from("incoming_items")
+        .select(cols)
+        .eq("received_date", date)
+        .order("received_at", { ascending: false }),
+    );
+  }
+
+  async listAllItemsLite(): Promise<ListItem[]> {
+    return this.itemsLite(async (cols) =>
+      this.db
+        .from("incoming_items")
+        .select(cols)
+        .order("received_at", { ascending: false })
+        .limit(5000),
+    );
   }
 
   async getItem(id: string): Promise<IncomingItem | null> {

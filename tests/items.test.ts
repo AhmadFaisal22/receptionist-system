@@ -67,6 +67,20 @@ describe("MemoryStore — incoming items", () => {
     expect(await store.listAllItems()).toHaveLength(2);
   });
 
+  it("lite listing omits proof blobs and sets hasProof", async () => {
+    const store = new MemoryStore();
+    await store.createItem(input({ proofSignature: SIG }), "guard");
+    await store.createItem(input({ proofSignature: null, proofPhoto: null }), "guard");
+    const lite = await store.listAllItemsLite();
+    expect(lite).toHaveLength(2);
+    expect(lite.some((x) => x.hasProof)).toBe(true);
+    expect(lite.some((x) => !x.hasProof)).toBe(true);
+    const row = lite[0] as Record<string, unknown>;
+    expect(row.proofSignature).toBeUndefined();
+    expect(row.proofPhoto).toBeUndefined();
+    expect(row.collectedProof).toBeUndefined();
+  });
+
   it("deletes an item", async () => {
     const store = new MemoryStore();
     const it1 = await store.createItem(input(), "guard");

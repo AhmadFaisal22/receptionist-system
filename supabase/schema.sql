@@ -85,6 +85,11 @@ create table if not exists incoming_items (
   logged_by text not null default '',
   collected_at timestamptz,
   collected_proof text check (collected_proof is null or collected_proof like 'data:image/png;base64,%'),
+  -- Cheap existence flag so the polled list can show a proof ✓ without pulling
+  -- the base64 blobs (keeps Supabase egress low).
+  has_proof boolean generated always as (
+    proof_photo is not null or proof_signature is not null or collected_proof is not null
+  ) stored,
   received_date date not null default ((now() at time zone 'Asia/Jakarta')::date),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

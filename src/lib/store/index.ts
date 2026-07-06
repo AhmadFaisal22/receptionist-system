@@ -2,6 +2,8 @@ import type {
   CheckoutMethod,
   Employee,
   IncomingItem,
+  ListItem,
+  ListVisit,
   PublicVisit,
   Visit,
 } from "../types";
@@ -18,10 +20,16 @@ export { localDate } from "../dates";
 
 export interface Store {
   createVisit(input: CheckinInput): Promise<Visit>;
-  /** date is a local yyyy-mm-dd string */
+  /** date is a local yyyy-mm-dd string. FULL rows (with images) — exports only. */
   listVisits(date: string): Promise<Visit[]>;
-  /** every visit, newest first (capped) — for the "view all" mode */
+  /** every visit, newest first (capped) — FULL rows, exports only */
   listAllVisits(): Promise<Visit[]>;
+  /** date view WITHOUT image blobs — for the polled dashboard */
+  listVisitsLite(date: string): Promise<ListVisit[]>;
+  /** view-all WITHOUT image blobs — for the polled dashboard */
+  listAllVisitsLite(): Promise<ListVisit[]>;
+  /** just submittedAt timestamps — for the traffic chart */
+  listVisitTimestamps(): Promise<string[]>;
   getVisit(id: string): Promise<Visit | null>;
   confirmVisit(id: string): Promise<Visit | null>;
   checkoutVisit(id: string, method: CheckoutMethod): Promise<Visit | null>;
@@ -40,10 +48,14 @@ export interface Store {
 
   // ---- Incoming Items ----
   createItem(input: ItemCreateInput, loggedBy: string): Promise<IncomingItem>;
-  /** date is a local yyyy-mm-dd string (Asia/Jakarta) */
+  /** date view — FULL rows (with proof blobs) — exports only */
   listItems(date: string): Promise<IncomingItem[]>;
-  /** every item, newest first (capped) — for the "view all" mode */
+  /** view-all — FULL rows, exports only */
   listAllItems(): Promise<IncomingItem[]>;
+  /** date view WITHOUT proof blobs — for the polled dashboard */
+  listItemsLite(date: string): Promise<ListItem[]>;
+  /** view-all WITHOUT proof blobs — for the polled dashboard */
+  listAllItemsLite(): Promise<ListItem[]>;
   getItem(id: string): Promise<IncomingItem | null>;
   updateItem(id: string, patch: ItemUpdateInput): Promise<IncomingItem | null>;
   deleteItem(id: string): Promise<boolean>;
@@ -53,6 +65,23 @@ export interface Store {
 export function toPublic(v: Visit): PublicVisit {
   const { exitToken: _exitToken, ...pub } = v;
   return pub;
+}
+
+/** Drop the exit token AND the heavy image blobs for the polled list. */
+export function toListVisit(v: Visit): ListVisit {
+  const {
+    exitToken: _exitToken,
+    photoDataUrl: _photoDataUrl,
+    signatureDataUrl: _signatureDataUrl,
+    ...lite
+  } = v;
+  return lite;
+}
+
+/** Drop the proof blobs for the polled item list; keep a hasProof flag. */
+export function toListItem(i: IncomingItem): ListItem {
+  const { proofSignature, proofPhoto, collectedProof, ...lite } = i;
+  return { ...lite, hasProof: !!(proofSignature || proofPhoto || collectedProof) };
 }
 
 const g = globalThis as unknown as { __vlogStore?: Store };

@@ -38,6 +38,10 @@ export interface Visit {
 
 export type PublicVisit = Omit<Visit, "exitToken">;
 
+/** List row for polled endpoints — excludes the heavy base64 image blobs so the
+ *  frequent dashboard polls stay tiny. Images load on demand per record. */
+export type ListVisit = Omit<PublicVisit, "photoDataUrl" | "signatureDataUrl">;
+
 // ---- Incoming Items module (packages/documents at the gate & reception) ----
 
 export type ItemType =
@@ -74,3 +78,9 @@ export interface IncomingItem {
   submittedAt: string;
   updatedAt: string;
 }
+
+/** List row for polled item endpoints — excludes proof blobs. */
+export type ListItem = Omit<
+  IncomingItem,
+  "proofSignature" | "proofPhoto" | "collectedProof"
+> & { hasProof: boolean };

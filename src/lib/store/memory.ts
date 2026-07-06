@@ -2,14 +2,21 @@ import crypto from "crypto";
 import { PHOTO_RETENTION_DAYS } from "../config";
 import { localDate } from "../dates";
 import { phonesMatch } from "../phone";
-import type { CheckoutMethod, Employee, IncomingItem, Visit } from "../types";
+import type {
+  CheckoutMethod,
+  Employee,
+  IncomingItem,
+  ListItem,
+  ListVisit,
+  Visit,
+} from "../types";
 import type {
   CheckinInput,
   ItemCreateInput,
   ItemUpdateInput,
   VisitUpdateInput,
 } from "../validation";
-import type { Store } from "./index";
+import { toListItem, toListVisit, type Store } from "./index";
 
 const SEED_EMPLOYEES: Omit<Employee, "id">[] = [
   { name: "Rina Wijaya", department: "HR", active: true },
@@ -98,6 +105,19 @@ export class MemoryStore implements Store {
   async listAllVisits(): Promise<Visit[]> {
     this.maintenance();
     return [...this.visits].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  }
+
+  async listVisitsLite(date: string): Promise<ListVisit[]> {
+    return (await this.listVisits(date)).map(toListVisit);
+  }
+
+  async listAllVisitsLite(): Promise<ListVisit[]> {
+    return (await this.listAllVisits()).map(toListVisit);
+  }
+
+  async listVisitTimestamps(): Promise<string[]> {
+    this.maintenance();
+    return this.visits.map((v) => v.submittedAt);
   }
 
   async getVisit(id: string): Promise<Visit | null> {
@@ -217,6 +237,14 @@ export class MemoryStore implements Store {
 
   async listAllItems(): Promise<IncomingItem[]> {
     return [...this.items].sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+  }
+
+  async listItemsLite(date: string): Promise<ListItem[]> {
+    return (await this.listItems(date)).map(toListItem);
+  }
+
+  async listAllItemsLite(): Promise<ListItem[]> {
+    return (await this.listAllItems()).map(toListItem);
   }
 
   async getItem(id: string): Promise<IncomingItem | null> {

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { staffDict, type Lang } from "@/lib/i18n";
-import type { PublicVisit } from "@/lib/types";
 
 type Period = "day" | "week" | "month";
 
@@ -38,14 +37,15 @@ interface Bucket {
 export default function TrafficCard({ lang }: { lang: Lang }) {
   const t = staffDict[lang];
   const [period, setPeriod] = useState<Period>("day");
-  const [visits, setVisits] = useState<PublicVisit[]>([]);
+  const [timestamps, setTimestamps] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/visits?all=1", { cache: "no-store" });
-        if (res.ok && !cancelled) setVisits((await res.json()) as PublicVisit[]);
+        // Tiny endpoint: just visit timestamps, no rows/images.
+        const res = await fetch("/api/visits/stats", { cache: "no-store" });
+        if (res.ok && !cancelled) setTimestamps((await res.json()) as string[]);
       } catch {
         // leave empty — the card shows "no data"
       }
@@ -76,8 +76,8 @@ export default function TrafficCard({ lang }: { lang: Lang }) {
         keys.push({ key: ds, label: dayLabel(ds), count: 0 });
       }
       const idx = new Map(keys.map((b, i) => [b.key, i]));
-      for (const v of visits) {
-        const i = idx.get(wibDate(v.submittedAt));
+      for (const ts of timestamps) {
+        const i = idx.get(wibDate(ts));
         if (i !== undefined) keys[i].count++;
       }
       return keys;
@@ -91,8 +91,8 @@ export default function TrafficCard({ lang }: { lang: Lang }) {
         keys.push({ key: ds, label: dayLabel(ds), count: 0 });
       }
       const idx = new Map(keys.map((b, i) => [b.key, i]));
-      for (const v of visits) {
-        const i = idx.get(mondayOf(wibDate(v.submittedAt)));
+      for (const ts of timestamps) {
+        const i = idx.get(mondayOf(wibDate(ts)));
         if (i !== undefined) keys[i].count++;
       }
       return keys;
@@ -107,12 +107,12 @@ export default function TrafficCard({ lang }: { lang: Lang }) {
       keys.push({ key: ym, label: monthName(ym), count: 0 });
     }
     const idx = new Map(keys.map((b, i) => [b.key, i]));
-    for (const v of visits) {
-      const i = idx.get(wibDate(v.submittedAt).slice(0, 7));
+    for (const ts of timestamps) {
+      const i = idx.get(wibDate(ts).slice(0, 7));
       if (i !== undefined) keys[i].count++;
     }
     return keys;
-  }, [visits, period, t.dateLocale]);
+  }, [timestamps, period, t.dateLocale]);
 
   const max = Math.max(1, ...buckets.map((b) => b.count));
   const hasData = buckets.some((b) => b.count > 0);

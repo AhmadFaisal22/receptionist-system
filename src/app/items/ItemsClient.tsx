@@ -6,7 +6,7 @@ import { itemsDict, staffDict, type ItemMessages } from "@/lib/i18n";
 import { ITEM_STATUSES, ITEM_TYPES } from "@/lib/validation";
 import { UOMS } from "@/lib/config";
 import { useLang } from "@/lib/useLang";
-import type { IncomingItem, ItemStatus } from "@/lib/types";
+import type { IncomingItem, ItemStatus, ListItem } from "@/lib/types";
 import BackToMenu from "@/components/BackToMenu";
 import DownloadableImage from "@/components/DownloadableImage";
 import LangToggle from "@/components/LangToggle";
@@ -73,14 +73,16 @@ export default function ItemsClient({
   const t = itemsDict[lang];
   const st = staffDict[lang];
 
-  const [items, setItems] = useState<IncomingItem[]>([]);
+  const [items, setItems] = useState<ListItem[]>([]);
   const [date, setDate] = useState(localDate());
   const [showAll, setShowAll] = useState(false);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | ItemStatus>("");
   const [loading, setLoading] = useState(true);
   const [live, setLive] = useState(false);
-  const [selected, setSelected] = useState<IncomingItem | null>(null);
+  const [selected, setSelected] = useState<ListItem | null>(null);
+  // Full record (with proof images) fetched on demand when a row opens.
+  const [detail, setDetail] = useState<IncomingItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [collectSig, setCollectSig] = useState<string | null>(null);
   const [pdfMenu, setPdfMenu] = useState(false);
@@ -112,7 +114,7 @@ export default function ItemsClient({
         return;
       }
       if (!res.ok) throw new Error(String(res.status));
-      setItems((await res.json()) as IncomingItem[]);
+      setItems((await res.json()) as ListItem[]);
       setLive(true);
     } catch {
       setLive(false);
@@ -230,7 +232,27 @@ export default function ItemsClient({
     }
   }
 
-  async function patchStatus(item: IncomingItem, status: ItemStatus, collectedProof?: string) {
+  // Open a row: show text immediately (lite), load the full record (proof
+  // images) on demand.
+  async function openItem(i: ListItem) {
+    setSelected(i);
+    setDetail(null);
+    setCollectSig(null);
+    try {
+      const res = await fetch(`/api/items/${i.id}`, { cache: "no-store" });
+      if (res.ok) setDetail((await res.json()) as IncomingItem);
+    } catch {
+      // proofs just won't show; text detail is already visible
+    }
+  }
+
+  function closeDrawer() {
+    setSelected(null);
+    setDetail(null);
+    setCollectSig(null);
+  }
+
+  async function patchStatus(item: ListItem, status: ItemStatus, collectedProof?: string) {
     setBusy(true);
     try {
       const res = await fetch(`/api/items/${item.id}`, {
@@ -239,7 +261,18 @@ export default function ItemsClient({
         body: JSON.stringify(collectedProof ? { status, collectedProof } : { status }),
       });
       if (res.ok) {
-        setSelected((await res.json()) as IncomingItem);
+        const full = (await res.json()) as IncomingItem;
+        setDetail(full);
+        setSelected((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: full.status,
+                collectedAt: full.collectedAt,
+                hasProof: !!(full.proofSignature || full.proofPhoto || full.collectedProof),
+              }
+            : prev,
+        );
         setCollectSig(null);
         load();
       }
@@ -253,13 +286,13 @@ export default function ItemsClient({
     window.location.replace("/login");
   }
 
-  async function remove(item: IncomingItem) {
+  async function remove(item: ListItem) {
     if (!window.confirm(t.confirmDelete)) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/items/${item.id}`, { method: "DELETE" });
       if (res.ok) {
-        setSelected(null);
+        closeDrawer();
         load();
       }
     } finally {
@@ -560,7 +593,7 @@ export default function ItemsClient({
               </tr>
             )}
             {filtered.map((i, idx) => (
-              <tr key={i.id} onClick={() => { setSelected(i); setCollectSig(null); }} className="cursor-pointer hover:bg-slate-50">
+              <tr key={i.id} onClick={() => openItem(i)} className="cursor-pointer hover:bg-slate-50">
                 <td className={`${td} text-center`}>{idx + 1}</td>
                 <td className={`${td} text-center whitespace-nowrap`}>
                   <div>{fmtDate(i.receivedAt)}</div>
@@ -576,7 +609,7 @@ export default function ItemsClient({
                 <td className={td}>{i.recipientDepartment || "—"}</td>
                 <td className={`${td} text-center`}><StatusBadge status={i.status} t={t} /></td>
                 <td className={`${td} text-center`}>
-                  {i.proofSignature || i.proofPhoto ? (
+                  {i.hasProof ? (
                     <span className="text-green-600" title="proof">✓</span>
                   ) : (
                     <span className="text-slate-300">—</span>
@@ -593,7 +626,7 @@ export default function ItemsClient({
       {selected && (
         <div
           className="vlog-fade fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-20"
-          onClick={() => { setSelected(null); setCollectSig(null); }}
+          onClick={closeDrawer}
         >
           <div className="vlog-pop w-full max-w-md rounded-3xl bg-white p-6 max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between">
@@ -617,13 +650,13 @@ export default function ItemsClient({
               )}
             </div>
 
-            {(selected.proofPhoto || selected.proofSignature) && (
+            {detail && (detail.proofPhoto || detail.proofSignature) && (
               <div className="mt-4">
                 <p className="text-xs text-slate-500 mb-1">{t.senderProofLabel}</p>
                 <div className="flex gap-3">
-                  {selected.proofPhoto && (
+                  {detail.proofPhoto && (
                     <DownloadableImage
-                      src={selected.proofPhoto}
+                      src={detail.proofPhoto}
                       alt="proof"
                       name={`${selected.code}-photo`}
                       title={st.download}
@@ -631,9 +664,9 @@ export default function ItemsClient({
                       imgClassName="w-24 h-24 rounded-2xl object-cover border border-slate-200"
                     />
                   )}
-                  {selected.proofSignature && (
+                  {detail.proofSignature && (
                     <DownloadableImage
-                      src={selected.proofSignature}
+                      src={detail.proofSignature}
                       alt="sender signature"
                       name={`${selected.code}-sender-sign`}
                       title={st.download}
@@ -647,11 +680,11 @@ export default function ItemsClient({
             )}
 
             {/* Receiver's signature captured at collection. */}
-            {selected.collectedProof && (
+            {detail?.collectedProof && (
               <div className="mt-4">
                 <p className="text-xs text-slate-500 mb-1">{t.receiverProofLabel}</p>
                 <DownloadableImage
-                  src={selected.collectedProof}
+                  src={detail.collectedProof}
                   alt="receiver signature"
                   name={`${selected.code}-receiver-sign`}
                   title={st.download}
@@ -686,7 +719,7 @@ export default function ItemsClient({
                   {t.delete}
                 </button>
               )}
-              <button onClick={() => { setSelected(null); setCollectSig(null); }} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-600">
+              <button onClick={closeDrawer} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-600">
                 {t.close}
               </button>
             </div>

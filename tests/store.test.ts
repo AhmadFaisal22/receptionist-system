@@ -120,4 +120,18 @@ describe("MemoryStore", () => {
     expect(pub.exitToken).toBeUndefined();
     expect(pub.code).toBe(v.code);
   });
+
+  it("lite listing omits image blobs + exit token; timestamps are strings", async () => {
+    const store = new MemoryStore();
+    await store.createVisit(input({ photoDataUrl: "data:image/jpeg;base64,AAAA" }));
+    const lite = (await store.listAllVisitsLite())[0] as Record<string, unknown>;
+    expect(lite.photoDataUrl).toBeUndefined();
+    expect(lite.signatureDataUrl).toBeUndefined();
+    expect(lite.exitToken).toBeUndefined();
+    expect(lite.code).toBe("SEG-0001");
+
+    const ts = await store.listVisitTimestamps();
+    expect(ts).toHaveLength(1);
+    expect(typeof ts[0]).toBe("string");
+  });
 });

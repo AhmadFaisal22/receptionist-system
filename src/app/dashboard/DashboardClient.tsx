@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 import { fmtDate, fmtTime, localDate } from "@/lib/dates";
 import { dict, staffDict, type Lang, type StaffMessages } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
-import type { PublicVisit } from "@/lib/types";
+import type { ListVisit } from "@/lib/types";
 import { LOCATIONS, locationLabel } from "@/lib/config";
 import BackToMenu from "@/components/BackToMenu";
 import DownloadableImage from "@/components/DownloadableImage";
@@ -60,7 +60,7 @@ const LOGBOOK_ALIGN = [
   "text-left",
 ];
 
-function StatusPill({ visit, t }: { visit: PublicVisit; t: StaffMessages }) {
+function StatusPill({ visit, t }: { visit: ListVisit; t: StaffMessages }) {
   if (visit.status === "pending") {
     return (
       <span className="rounded-full bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5">
@@ -176,11 +176,11 @@ export default function DashboardClient({
   const hostLabel = (name: string) => `${t.hostHonorific} ${name}`;
   const logoKey = logoSrc.includes("SIGAP") ? "sigap" : "seg";
 
-  const [visits, setVisits] = useState<PublicVisit[]>([]);
+  const [visits, setVisits] = useState<ListVisit[]>([]);
   const [date, setDate] = useState(localDate());
   const [showAll, setShowAll] = useState(false);
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<PublicVisit | null>(null);
+  const [selected, setSelected] = useState<ListVisit | null>(null);
   const [pdfMenu, setPdfMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -214,7 +214,7 @@ export default function DashboardClient({
         return;
       }
       if (!res.ok) throw new Error(String(res.status));
-      setVisits((await res.json()) as PublicVisit[]);
+      setVisits((await res.json()) as ListVisit[]);
       setLive(true);
     } catch {
       setLive(false);
@@ -286,13 +286,13 @@ export default function DashboardClient({
     );
   }, [visits, q]);
 
-  async function action(visit: PublicVisit, kind: "confirm" | "checkout") {
+  async function action(visit: ListVisit, kind: "confirm" | "checkout") {
     await fetch(`/api/visits/${visit.id}/${kind}`, { method: "POST" });
     setSelected(null);
     load();
   }
 
-  function startEdit(v: PublicVisit) {
+  function startEdit(v: ListVisit) {
     setForm({
       name: v.name,
       institution: v.institution,
@@ -307,7 +307,7 @@ export default function DashboardClient({
     setEditing(true);
   }
 
-  async function saveEdit(visit: PublicVisit) {
+  async function saveEdit(visit: ListVisit) {
     setBusy(true);
     setEditError("");
     try {
@@ -340,7 +340,7 @@ export default function DashboardClient({
         setEditError(detail ? `${t.saveError} (${detail})` : t.saveError);
         return;
       }
-      const updated = (await res.json()) as PublicVisit;
+      const updated = (await res.json()) as ListVisit;
       setSelected(updated);
       setEditing(false);
       load();
@@ -351,7 +351,7 @@ export default function DashboardClient({
     }
   }
 
-  async function deleteVisit(visit: PublicVisit) {
+  async function deleteVisit(visit: ListVisit) {
     if (!window.confirm(t.confirmDeleteVisit)) return;
     setBusy(true);
     try {
@@ -669,7 +669,7 @@ export default function DashboardClient({
                   </td>
                   <td className="px-3 py-2.5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={v.signatureDataUrl} alt="signature" className="h-6 max-w-16 object-contain mx-auto" />
+                    <img src={`/api/visits/${v.id}/signature`} loading="lazy" alt="signature" className="h-6 max-w-16 object-contain mx-auto" />
                   </td>
                 </tr>
               ))}
@@ -774,20 +774,19 @@ export default function DashboardClient({
             ) : (
               <>
                 <div className="flex gap-3 mt-4">
-                  {selected.photoDataUrl ? (
-                    <DownloadableImage
-                      src={selected.photoDataUrl}
-                      alt="visitor"
-                      name={`${selected.code}-photo`}
-                      title={t.download}
-                      wrapClassName="w-24 h-24 shrink-0"
-                      imgClassName="w-24 h-24 rounded-2xl object-cover border border-slate-200"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
-                      {t.noPhoto}
-                    </div>
-                  )}
+                  <DownloadableImage
+                    src={`/api/visits/${selected.id}/photo`}
+                    alt="visitor"
+                    name={`${selected.code}-photo`}
+                    title={t.download}
+                    wrapClassName="w-24 h-24 shrink-0"
+                    imgClassName="w-24 h-24 rounded-2xl object-cover border border-slate-200"
+                    fallback={
+                      <div className="w-24 h-24 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs shrink-0">
+                        {t.noPhoto}
+                      </div>
+                    }
+                  />
                   <div className="flex-1 text-sm space-y-1.5">
                     <p>
                       <span className="text-slate-500">{t.phoneLabel}:</span> {selected.phone}
@@ -816,7 +815,7 @@ export default function DashboardClient({
                 </div>
                 <p className="text-xs text-slate-500 mt-4 mb-1">{t.signatureLabel}</p>
                 <DownloadableImage
-                  src={selected.signatureDataUrl}
+                  src={`/api/visits/${selected.id}/signature`}
                   alt="signature"
                   name={`${selected.code}-signature`}
                   title={t.download}
