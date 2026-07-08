@@ -204,16 +204,26 @@ export default function DashboardClient({
     ? `all=1&lang=${lang}&variant=${variant}&logo=${logoKey}`
     : `date=${date}&lang=${lang}&variant=${variant}&logo=${logoKey}`;
 
+  // Last ETag from the poll; lets unchanged polls come back as an empty 304
+  // instead of re-shipping the whole list (keeps Vercel origin transfer low).
+  const etagRef = useRef<string | null>(null);
   const load = useCallback(async () => {
     try {
       const res = await fetch(showAll ? `/api/visits?all=1` : `/api/visits?date=${date}`, {
         cache: "no-store",
+        headers: etagRef.current ? { "If-None-Match": etagRef.current } : undefined,
       });
+      if (res.status === 304) {
+        setLive(true);
+        setLoading(false);
+        return; // unchanged — keep the current rows
+      }
       if (res.status === 401) {
         window.location.replace(`/login?next=${loginNext}`);
         return;
       }
       if (!res.ok) throw new Error(String(res.status));
+      etagRef.current = res.headers.get("ETag");
       setVisits((await res.json()) as ListVisit[]);
       setLive(true);
     } catch {
@@ -225,13 +235,14 @@ export default function DashboardClient({
 
   useEffect(() => {
     firstLoad.current = true;
+    etagRef.current = null; // new date/view is a different resource — drop the ETag
     setLoading(true);
     load();
     // Poll for updates, but skip while the tab is hidden (saves battery/requests
     // on mobile) and refresh instantly when the user returns.
     const timer = setInterval(() => {
       if (!document.hidden) load();
-    }, 4000);
+    }, 8000);
     const onVisible = () => {
       if (!document.hidden) load();
     };

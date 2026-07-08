@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { jsonMaybe304 } from "@/lib/http-cache";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { getStore, localDate } from "@/lib/store";
 import { ItemCreateSchema, zodIssues } from "@/lib/validation";
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
             ? params.get("date")!
             : localDate(),
         );
-  return NextResponse.json(items);
+  return jsonMaybe304(req, items);
 }
 
 export async function POST(req: Request) {

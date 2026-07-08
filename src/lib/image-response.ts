@@ -14,7 +14,10 @@ export function imageResponse(dataUrl: string | null | undefined): Response {
     headers: {
       "Content-Type": m[1],
       "Content-Length": String(bytes.length),
-      "Cache-Control": "private, max-age=86400",
+      // Per-id and immutable once created — let each device cache it "forever"
+      // so signatures/photos are fetched once, not re-pulled on every visit.
+      // `private` keeps them out of shared caches so the auth check still runs.
+      "Cache-Control": "private, max-age=31536000, immutable",
     },
   });
 }

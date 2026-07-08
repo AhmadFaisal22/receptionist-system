@@ -185,12 +185,12 @@ begin
   end if;
 end $$;
 
--- Seed the employee directory (edit to your real staff, or use /admin).
-insert into employees (name, department) values
-  ('Rina Wijaya', 'HR'),
-  ('Andi Prasetyo', 'Warehouse'),
-  ('Hartono', 'QA'),
-  ('Dian Putri', 'Finance'),
-  ('Slamet Riyadi', 'Production'),
-  ('Mei Lin', 'Engineering')
-on conflict do nothing;
+-- -- Seed the employee directory (edit to your real staff, or use /admin).
+-- insert into employees (name, department) values
+--   ('Rina Wijaya', 'HR'),
+--   ('Andi Prasetyo', 'Warehouse'),
+--   ('Hartono', 'QA'),
+--   ('Dian Putri', 'Finance'),
+--   ('Slamet Riyadi', 'Production'),
+--   ('Mei Lin', 'Engineering')
+-- on conflict do nothing;

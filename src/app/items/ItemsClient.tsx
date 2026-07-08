@@ -104,16 +104,26 @@ export default function ItemsClient({
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Last ETag from the poll — unchanged polls return an empty 304 instead of
+  // re-shipping the whole list (keeps Vercel origin transfer low).
+  const etagRef = useRef<string | null>(null);
   const load = useCallback(async () => {
     try {
       const res = await fetch(showAll ? `/api/items?all=1` : `/api/items?date=${date}`, {
         cache: "no-store",
+        headers: etagRef.current ? { "If-None-Match": etagRef.current } : undefined,
       });
+      if (res.status === 304) {
+        setLive(true);
+        setLoading(false);
+        return; // unchanged — keep the current rows
+      }
       if (res.status === 401) {
         window.location.replace("/login?next=/items");
         return;
       }
       if (!res.ok) throw new Error(String(res.status));
+      etagRef.current = res.headers.get("ETag");
       setItems((await res.json()) as ListItem[]);
       setLive(true);
     } catch {
@@ -124,11 +134,12 @@ export default function ItemsClient({
   }, [date, showAll]);
 
   useEffect(() => {
+    etagRef.current = null; // new date/view is a different resource — drop the ETag
     setLoading(true);
     load();
     const timer = setInterval(() => {
       if (!document.hidden) load();
-    }, 4000);
+    }, 8000);
     const onVisible = () => {
       if (!document.hidden) load();
     };

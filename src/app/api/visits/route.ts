@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { jsonMaybe304 } from "@/lib/http-cache";
 import { getStore, localDate } from "@/lib/store";
 
 export async function GET(req: Request) {
@@ -20,5 +21,5 @@ export async function GET(req: Request) {
             ? params.get("date")!
             : localDate(),
         );
-  return NextResponse.json(visits);
+  return jsonMaybe304(req, visits);
 }
